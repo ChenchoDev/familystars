@@ -1,27 +1,11 @@
 [build]
   base = "apps/frontend"
-  command = "npm run build && cp public/manifest.json dist/ && cp public/service-worker.js dist/"
+  command = "npm install && npm run build"
   publish = "dist"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+[dev]
+  command = "cd apps/frontend && npm run dev"
+  port = 3000
 
-[context.production.environment]
-  VITE_API_URL = "https://familystars-api.onrender.com"
-
-[[headers]]
-  for = "/manifest.json"
-  [headers.values]
-    Content-Type = "application/json"
-
-[[headers]]
-  for = "/service-worker.js"
-  [headers.values]
-    Content-Type = "application/javascript"
-
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
+[context.production]
+  environment = { VITE_API_URL = "https://familystars-api.onrender.com/api" }
