@@ -221,7 +221,7 @@ export default function FamiliesPanel({ onPendingCountChange }) {
                   <td className="px-6 py-4 text-gray-400 text-sm">
                     {family.description || '-'}
                   </td>
-                  <td className="px-6 py-4 text-white">{personsCounts[family.id] || 0}</td>
+                  <td className="px-6 py-4 text-white">{family.person_count || 0}</td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleEdit(family)}
