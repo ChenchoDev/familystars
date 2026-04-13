@@ -1,6 +1,7 @@
 [build]
-  command = "cd apps/frontend && npm run build && cp public/manifest.json dist/ && cp public/service-worker.js dist/"
-  publish = "apps/frontend/dist"
+  base = "apps/frontend"
+  command = "npm run build && cp public/manifest.json dist/ && cp public/service-worker.js dist/"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"
