@@ -72,11 +72,14 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     const links = relationships
       ?.filter((rel) => {
         const personIds = nodes.map((n) => n.id);
-        return personIds.includes(rel.person_a_id) && personIds.includes(rel.person_b_id);
+        // Backend returns { person_a: { id: ... }, person_b: { id: ... } }
+        const aId = rel.person_a?.id || rel.person_a_id;
+        const bId = rel.person_b?.id || rel.person_b_id;
+        return personIds.includes(aId) && personIds.includes(bId);
       })
       .map((rel) => ({
-        source: rel.person_a_id,
-        target: rel.person_b_id,
+        source: rel.person_a?.id || rel.person_a_id,
+        target: rel.person_b?.id || rel.person_b_id,
         type: rel.type,
       })) || [];
 
