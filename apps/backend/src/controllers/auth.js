@@ -2,6 +2,60 @@ import pool from '../db/index.js';
 import { generateToken, generateMagicLinkToken, verifyToken } from '../services/jwt.js';
 import { sendMagicLink, sendInvitationEmail } from '../services/email.js';
 
+// POST /auth/login - Simple password login for testing
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Simple password check (for testing only)
+    if (password !== process.env.ADMIN_PASSWORD || password !== 'admin123') {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Find or create user
+    let userResult = await pool.query(
+      'SELECT id, name, role, family_id FROM users WHERE email = $1',
+      [email]
+    );
+
+    let user;
+    if (userResult.rows.length === 0) {
+      // Create new admin user
+      userResult = await pool.query(
+        `INSERT INTO users (email, name, role)
+         VALUES ($1, $2, 'admin')
+         RETURNING id, name, role, family_id`,
+        [email, email.split('@')[0]]
+      );
+      user = userResult.rows[0];
+    } else {
+      user = userResult.rows[0];
+    }
+
+    // Generate JWT
+    const jwtToken = generateToken({
+      id: user.id,
+      email,
+      role: user.role,
+      family_id: user.family_id,
+    });
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user.id,
+        email,
+        name: user.name,
+        role: user.role,
+        family_id: user.family_id,
+      },
+    });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+};
+
 // POST /auth/magic-link
 export const requestMagicLink = async (req, res) => {
   const { email } = req.validated;

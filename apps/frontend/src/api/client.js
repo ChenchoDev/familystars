@@ -31,6 +31,7 @@ client.interceptors.response.use(
 );
 
 export const authAPI = {
+  login: (email, password) => client.post('/auth/login', { email, password }),
   magicLink: (email) => client.post('/auth/magic-link', { email }),
   verify: (token) => client.get(`/auth/verify/${token}`),
   me: () => client.get('/auth/me'),

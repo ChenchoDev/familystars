@@ -13,6 +13,7 @@ import * as adminController from '../controllers/admin.js';
 const router = express.Router();
 
 // ===== AUTH ROUTES =====
+router.post('/auth/login', authController.login);
 router.post('/auth/magic-link', validate(schemas.magicLink), authController.requestMagicLink);
 router.get('/auth/verify/:token', authController.verifyMagicLink);
 router.get('/auth/me', requireAuth, authController.getCurrentUser);

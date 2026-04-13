@@ -5,8 +5,9 @@ import { authAPI } from '../api/client';
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [step, setStep] = useState('email'); // 'email' o 'verify'
+  const [step, setStep] = useState('email'); // 'email', 'verify' o 'login'
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -53,6 +54,28 @@ export default function Auth() {
     }
   };
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authAPI.login(email, password);
+      localStorage.setItem('token', response.data.token);
+      setSuccess('✅ ¡Autenticado! Redirigiendo...');
+      setTimeout(() => {
+        if (response.data.user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/app');
+        }
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-900/20 to-gray-950 flex items-center justify-center p-4">
       {/* Background stars */}
@@ -91,32 +114,110 @@ export default function Auth() {
             </div>
           )}
 
-          {/* Form */}
+          {/* Tabs */}
           {!token && (
-            <form onSubmit={handleSendMagicLink} className="space-y-4">
-              <div>
-                <label className="text-gray-300 text-sm font-medium block mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  required
-                  disabled={loading}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
-                />
+            <div className="space-y-4">
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => {
+                    setStep('email');
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                    step === 'email'
+                      ? 'bg-purple-700 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Magic Link
+                </button>
+                <button
+                  onClick={() => {
+                    setStep('login');
+                    setError(null);
+                    setSuccess(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
+                    step === 'login'
+                      ? 'bg-purple-700 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Login
+                </button>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Enviando...' : 'Recibir link de acceso'}
-              </button>
-            </form>
+              {/* Magic Link Form */}
+              {step === 'email' && (
+                <form onSubmit={handleSendMagicLink} className="space-y-4">
+                  <div>
+                    <label className="text-gray-300 text-sm font-medium block mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@email.com"
+                      required
+                      disabled={loading}
+                      className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Enviando...' : 'Recibir link de acceso'}
+                  </button>
+                </form>
+              )}
+
+              {/* Login Form */}
+              {step === 'login' && (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="text-gray-300 text-sm font-medium block mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@email.com"
+                      required
+                      disabled={loading}
+                      className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-300 text-sm font-medium block mb-2">
+                      Contraseña
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="admin123"
+                      required
+                      disabled={loading}
+                      className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Iniciando sesión...' : 'Entrar'}
+                  </button>
+                </form>
+              )}
+            </div>
           )}
 
           {/* Messages */}

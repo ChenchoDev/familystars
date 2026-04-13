@@ -7,10 +7,10 @@ const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-  max: 20,
-  statement_timeout: 30000,
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 30000,
+  max: 10,
+  statement_timeout: 60000,
 });
 
 pool.on('error', (err) => {
