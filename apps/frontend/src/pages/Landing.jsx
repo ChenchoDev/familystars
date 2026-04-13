@@ -58,7 +58,7 @@ export default function Landing() {
             <span style={{ fontSize: '20px', fontWeight: 'bold' }}>FamilyStars</span>
           </div>
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => navigate('/auth')}
             style={{
               padding: '10px 24px',
               background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
@@ -110,7 +110,7 @@ export default function Landing() {
             Conecta, descubre y comparte tu historia.
           </p>
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => navigate('/auth')}
             style={{
               padding: '16px 48px',
               background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
@@ -240,7 +240,7 @@ export default function Landing() {
             Empieza gratis, sin crear cuenta, sin complicaciones.
           </p>
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => navigate('/auth')}
             style={{
               padding: '16px 48px',
               background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
