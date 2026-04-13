@@ -37,10 +37,10 @@ export default function Constellation() {
       ]);
 
       // Check if we have valid data
-      // Backend returns { data: [...] }, so access .data.data for persons/relationships
+      // Backend structures: persons/relationships { data: [...] }, families { data: [...] }
       const persons = personsRes?.data?.data || [];
       const families = familiesRes?.data?.data || familiesRes?.data || [];
-      const relationships = relationshipsRes?.data?.data || relationshipsRes?.data || [];
+      const relationships = relationshipsRes?.data || [];
 
       if (persons.length > 0 && families.length > 0) {
         setPersons(persons);
