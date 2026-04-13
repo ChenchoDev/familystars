@@ -37,10 +37,10 @@ export default function Constellation() {
       ]);
 
       // Check if we have valid data
-      // Backend structures: persons/relationships { data: [...] }, families { data: [...] }
+      // Axios wraps response in data, backend also returns { data: [...] }, so double-wrapped
       const persons = personsRes?.data?.data || [];
       const families = familiesRes?.data?.data || familiesRes?.data || [];
-      const relationships = relationshipsRes?.data || [];
+      const relationships = relationshipsRes?.data?.data || [];
 
       if (persons.length > 0 && families.length > 0) {
         setPersons(persons);
