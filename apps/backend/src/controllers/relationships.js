@@ -43,7 +43,7 @@ export const listRelationships = async (req, res) => {
       notes: r.notes,
     }));
 
-    res.json({ data: relationships });
+    res.json(relationships);
   } catch (error) {
     console.error('Error listing relationships:', error);
     res.status(500).json({ error: 'Failed to fetch relationships' });

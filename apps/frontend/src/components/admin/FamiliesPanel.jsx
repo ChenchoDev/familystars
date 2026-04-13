@@ -28,7 +28,9 @@ export default function FamiliesPanel({ onPendingCountChange }) {
       setError(null);
       const familiesResponse = await familiesAPI.list();
       console.log('Families response:', familiesResponse);
-      const familiesData = Array.isArray(familiesResponse.data) ? familiesResponse.data : [];
+      const familiesData = Array.isArray(familiesResponse.data)
+        ? familiesResponse.data
+        : Array.isArray(familiesResponse) ? familiesResponse : [];
       setFamilies(familiesData);
 
       // Get persons count by family

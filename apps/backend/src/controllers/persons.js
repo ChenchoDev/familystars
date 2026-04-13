@@ -40,7 +40,7 @@ export const listPersons = async (req, res) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].count, 10);
 
-    res.json({ data: persons, total });
+    res.json(persons);
   } catch (error) {
     console.error('Error listing persons:', error);
     res.status(500).json({ error: 'Failed to fetch persons' });

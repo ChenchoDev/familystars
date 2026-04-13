@@ -54,7 +54,7 @@ export const listUsers = async (req, res) => {
       `SELECT id, email, name, role, family_id, created_at FROM users ORDER BY created_at DESC`
     );
 
-    res.json({ data: result.rows });
+    res.json(result.rows);
   } catch (error) {
     console.error('Error listing users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
