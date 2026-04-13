@@ -19,16 +19,19 @@ export default function PendingPanel({ onPendingCountChange }) {
         adminAPI.getPending(),
         familiesAPI.list(),
       ]);
-      setPending(pendingResponse.data);
-      setFamilies(familiesResponse.data);
+      const pendingData = pendingResponse.data || pendingResponse;
+      setPending(pendingData);
+      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
 
       // Update parent pending count
       const totalPending =
-        (pendingResponse.data.pending_persons?.length || 0) +
-        (pendingResponse.data.pending_relationships?.length || 0);
+        (Array.isArray(pendingData?.pending_persons) ? pendingData.pending_persons.length : 0) +
+        (Array.isArray(pendingData?.pending_relationships) ? pendingData.pending_relationships.length : 0);
       onPendingCountChange(totalPending);
     } catch (err) {
       setError(err.message);
+      setPending(null);
+      setFamilies([]);
     } finally {
       setLoading(false);
     }

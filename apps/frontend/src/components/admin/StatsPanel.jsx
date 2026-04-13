@@ -12,13 +12,20 @@ export default function StatsPanel({ onPendingCountChange }) {
       try {
         setLoading(true);
         const statsResponse = await adminAPI.getStats();
-        setStats(statsResponse.data);
-        onPendingCountChange(statsResponse.data.pending_count || 0);
+        const statsData = statsResponse.data || statsResponse;
+        setStats(statsData);
+        onPendingCountChange(statsData.pending_count || 0);
 
         // Get recent persons
-        const personsResponse = await personsAPI.list();
-        const approved = personsResponse.data.filter((p) => p.status === 'approved');
-        setRecentPersons(approved.slice(0, 5));
+        try {
+          const personsResponse = await personsAPI.list();
+          const personsData = Array.isArray(personsResponse.data) ? personsResponse.data : [];
+          const approved = personsData.filter((p) => p.status === 'approved');
+          setRecentPersons(approved.slice(0, 5));
+        } catch (personErr) {
+          console.error('Error fetching persons:', personErr);
+          setRecentPersons([]);
+        }
       } catch (err) {
         setError(err.message);
       } finally {

@@ -42,11 +42,15 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         personsAPI.list(),
         familiesAPI.list(),
       ]);
-      setRelationships(relResponse.data);
-      setPersons(personsResponse.data.filter((p) => p.status === 'approved'));
-      setFamilies(familiesResponse.data);
+      setRelationships(Array.isArray(relResponse.data) ? relResponse.data : []);
+      const personsData = Array.isArray(personsResponse.data) ? personsResponse.data : [];
+      setPersons(personsData.filter((p) => p.status === 'approved'));
+      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
     } catch (err) {
       setError(err.message);
+      setRelationships([]);
+      setPersons([]);
+      setFamilies([]);
     } finally {
       setLoading(false);
     }

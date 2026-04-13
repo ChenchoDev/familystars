@@ -42,10 +42,12 @@ export default function PersonsPanel({ onPendingCountChange }) {
         personsAPI.list(),
         familiesAPI.list(),
       ]);
-      setPersons(personsResponse.data);
-      setFamilies(familiesResponse.data);
+      setPersons(Array.isArray(personsResponse.data) ? personsResponse.data : []);
+      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
     } catch (err) {
       setError(err.message);
+      setPersons([]);
+      setFamilies([]);
     } finally {
       setLoading(false);
     }
