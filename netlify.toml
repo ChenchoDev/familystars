@@ -8,4 +8,4 @@
   port = 3000
 
 [context.production]
-  environment = { VITE_API_URL = "https://familystars-api.onrender.com/api" }
+  environment = { VITE_API_URL = "https://familystars-api.onrender.com" }
