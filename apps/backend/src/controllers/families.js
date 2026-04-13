@@ -4,13 +4,13 @@ import pool from '../db/index.js';
 export const listFamilies = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT f.id, f.name, f.color_hex, f.description,
+      `SELECT f.id, f.name, f.display_name, f.color_hex, f.description,
               COUNT(p.id) as person_count,
               u.name as admin_name
        FROM families f
        LEFT JOIN persons p ON f.id = p.family_id AND p.status = 'approved'
        LEFT JOIN users u ON f.admin_id = u.id
-       GROUP BY f.id, f.name, f.color_hex, f.description, u.name
+       GROUP BY f.id, f.name, f.display_name, f.color_hex, f.description, u.name
        ORDER BY f.name`
     );
 
@@ -27,13 +27,13 @@ export const getFamily = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT f.id, f.name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at,
+      `SELECT f.id, f.name, f.display_name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at,
               u.name as admin_name, COUNT(p.id) as person_count
        FROM families f
        LEFT JOIN users u ON f.admin_id = u.id
        LEFT JOIN persons p ON f.id = p.family_id AND p.status = 'approved'
        WHERE f.id = $1
-       GROUP BY f.id, f.name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at, u.name`,
+       GROUP BY f.id, f.name, f.display_name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at, u.name`,
       [id]
     );
 
@@ -50,14 +50,14 @@ export const getFamily = async (req, res) => {
 
 // POST /families [ADMIN ONLY]
 export const createFamily = async (req, res) => {
-  const { name, color_hex, description } = req.validated;
+  const { name, display_name, color_hex, description } = req.validated;
 
   try {
     const result = await pool.query(
-      `INSERT INTO families (name, color_hex, description, admin_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO families (name, display_name, color_hex, description, admin_id)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [name, color_hex, description, req.user.id]
+      [name, display_name || name, color_hex, description, req.user.id]
     );
 
     res.status(201).json(result.rows[0]);

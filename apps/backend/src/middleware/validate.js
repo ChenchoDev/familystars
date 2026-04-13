@@ -39,6 +39,7 @@ export const schemas = {
   }),
   family: Joi.object({
     name: Joi.string().max(100).optional(),
+    display_name: Joi.string().max(100).optional(),
     color_hex: Joi.string().regex(/^[0-9A-F]{6}$/i).optional(),
     description: Joi.string().optional(),
   }),

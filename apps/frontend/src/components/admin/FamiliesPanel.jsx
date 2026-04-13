@@ -15,7 +15,7 @@ export default function FamiliesPanel({ onPendingCountChange }) {
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '', color_hex: '' });
+  const [formData, setFormData] = useState({ name: '', display_name: '', description: '', color_hex: '' });
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function FamiliesPanel({ onPendingCountChange }) {
         await familiesAPI.create(formData);
         showToast('Familia creada correctamente');
       }
-      setFormData({ name: '', description: '', color_hex: '' });
+      setFormData({ name: '', display_name: '', description: '', color_hex: '' });
       setEditingId(null);
       setShowForm(false);
       fetchFamilies();
@@ -80,6 +80,7 @@ export default function FamiliesPanel({ onPendingCountChange }) {
   const handleEdit = (family) => {
     setFormData({
       name: family.name,
+      display_name: family.display_name || '',
       description: family.description || '',
       color_hex: family.color_hex,
     });
@@ -149,6 +150,21 @@ export default function FamiliesPanel({ onPendingCountChange }) {
                 required
                 className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
+            </div>
+            <div>
+              <label className="text-gray-300 text-sm font-medium block mb-1">
+                Nombre en constelación
+              </label>
+              <input
+                type="text"
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                placeholder="Ej: MARÍN, TALAVERA, García..."
+                className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Este nombre aparece como fondo en la constelación (en mayúsculas automáticamente)
+              </p>
             </div>
             <div>
               <label className="text-gray-300 text-sm font-medium block mb-1">
