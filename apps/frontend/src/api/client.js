@@ -71,11 +71,11 @@ export const photosAPI = {
 };
 
 export const adminAPI = {
+  getStats: () => client.get('/admin/stats'),
   getPending: () => client.get('/admin/pending'),
   getUsers: () => client.get('/admin/users'),
   changeRole: (userId, role) => client.patch(`/admin/users/${userId}/role`, { role }),
   revokeUser: (userId) => client.delete(`/admin/users/${userId}`),
-  getStats: () => client.get('/admin/stats'),
 };
 
 export default client;
