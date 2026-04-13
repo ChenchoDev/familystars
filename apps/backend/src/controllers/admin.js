@@ -120,6 +120,8 @@ export const getStats = async (req, res) => {
 
     const familiesCount = await pool.query('SELECT COUNT(*) FROM families');
 
+    const relationshipsCount = await pool.query('SELECT COUNT(*) FROM relationships');
+
     const usersCount = await pool.query('SELECT COUNT(*) FROM users');
 
     const pendingCount = await pool.query(
@@ -135,7 +137,8 @@ export const getStats = async (req, res) => {
       total_persons: parseInt(personsCount.rows[0].count, 10),
       total_families: parseInt(familiesCount.rows[0].count, 10),
       total_users: parseInt(usersCount.rows[0].count, 10),
-      pending_items: pendingCount.rows.reduce((sum, row) => sum + parseInt(row.count, 10), 0),
+      total_relationships: parseInt(relationshipsCount.rows[0].count, 10),
+      pending_count: pendingCount.rows.reduce((sum, row) => sum + parseInt(row.count, 10), 0),
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
