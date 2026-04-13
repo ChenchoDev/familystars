@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(npm uninstall:*)",
+      "Bash(taskkill /F /IM node.exe)"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+.starry-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+  animation: twinkle var(--duration) ease-in-out var(--delay) infinite;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.3;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0.5px);
+  }
+  100% {
+    opacity: 0.3;
+    filter: blur(0px);
+  }
+}
+
+/* Agregar resplandor ocasional a algunas estrellas */
+.star:nth-child(3n) {
+  animation: twinkle-bright var(--duration) ease-in-out var(--delay) infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 1);
+}
+
+@keyframes twinkle-bright {
+  0% {
+    opacity: 0.5;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(1px);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 1);
+  }
+  100% {
+    opacity: 0.5;
+    filter: blur(0px);
+  }
+}

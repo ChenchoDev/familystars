@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: familystars-api
+    runtime: node
+    plan: free
+    buildCommand: cd apps/backend && npm install
+    startCommand: cd apps/backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        scope: run
+      - key: JWT_SECRET
+        scope: run
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: PORT
+        value: 3000
+      - key: CLOUDINARY_CLOUD_NAME
+        scope: run
+      - key: CLOUDINARY_API_KEY
+        scope: run
+      - key: CLOUDINARY_API_SECRET
+        scope: run
+      - key: RESEND_API_KEY
+        scope: run
+      - key: EMAIL_FROM
+        value: noreply@familystars.app
+      - key: FRONTEND_URL
+        value: https://familystars.vercel.app
+      - key: ADMIN_EMAIL
+        value: chencho@example.com
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100

@@ -1,0 +1,4 @@
+- [FamilyStars Project Overview](project_overview.md) — Gift genealogy app, constellation metaphor, 12-week MVP
+- [Family Color Palette](family_colors.md) — Paterna purple, Materna cyan, Política1 orange, Política2 emerald
+- [Development Preferences](dev_preferences.md) — Owner: Chencho, MVP focus, zero-cost hosting, family collaboration
+- [Fase 1 Status](fase_1_status.md) — Backend 100% complete, 25+ endpoints, ready for Fase 2

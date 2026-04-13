@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FamilyStars" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <title>FamilyStars — Tu Árbol Genealógico como Constelación</title>
+    <meta name="description" content="Visualiza tu árbol genealógico como una constelación de estrellas. Conecta familias, descubre relaciones, comparte tu historia.">
+    <meta name="theme-color" content="#a855f7">
+    <meta name="msapplication-TileColor" content="#a855f7">
+    <meta name="msapplication-navbutton-color" content="#a855f7">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- OpenGraph for social sharing -->
+    <meta property="og:title" content="FamilyStars — Tu Árbol Genealógico como Constelación" />
+    <meta property="og:description" content="Visualiza tu árbol genealógico como una constelación de estrellas." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://familystars.vercel.app" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js').catch((err) => {
+          console.log('Service Worker registration failed:', err);
+        });
+      }
+    </script>
+  </body>
+</html>
