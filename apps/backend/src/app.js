@@ -8,10 +8,15 @@ import routes from './routes/index.js';
 const app = express();
 
 // Middleware
-app.use(helmet());
+// CORS must come before helmet and other middleware
+app.use(cors({
+  origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'https://familystarss.netlify.app'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
-// CORS: Allow all origins (development mode)
-app.use(cors());
+app.use(helmet());
 app.use(express.json());
 
 // Routes
