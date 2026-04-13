@@ -10,7 +10,7 @@ export const listFamilies = async (req, res) => {
        FROM families f
        LEFT JOIN persons p ON f.id = p.family_id AND p.status = 'approved'
        LEFT JOIN users u ON f.admin_id = u.id
-       GROUP BY f.id, u.name
+       GROUP BY f.id, f.name, f.color_hex, f.description, u.name
        ORDER BY f.name`
     );
 
@@ -27,12 +27,13 @@ export const getFamily = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT f.*, u.name as admin_name, COUNT(p.id) as person_count
+      `SELECT f.id, f.name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at,
+              u.name as admin_name, COUNT(p.id) as person_count
        FROM families f
        LEFT JOIN users u ON f.admin_id = u.id
        LEFT JOIN persons p ON f.id = p.family_id AND p.status = 'approved'
        WHERE f.id = $1
-       GROUP BY f.id, u.name`,
+       GROUP BY f.id, f.name, f.color_hex, f.description, f.admin_id, f.created_at, f.updated_at, u.name`,
       [id]
     );
 

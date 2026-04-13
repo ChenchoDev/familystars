@@ -37,8 +37,9 @@ export default function Constellation() {
       ]);
 
       // Check if we have valid data
-      if (personsRes?.data && personsRes.data.length > 0 && familiesRes?.data) {
-        setPersons(personsRes.data);
+      // Backend returns { data: [...], total: N }, so access personsRes.data.data
+      if (personsRes?.data?.data && personsRes.data.data.length > 0 && familiesRes?.data) {
+        setPersons(personsRes.data.data);
         setFamilies(familiesRes.data);
         setRelationships(relationshipsRes.data || []);
       } else {
