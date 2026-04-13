@@ -8,7 +8,8 @@ export const login = async (req, res) => {
 
   try {
     // Simple password check (for testing only)
-    if (password !== process.env.ADMIN_PASSWORD || password !== 'admin123') {
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    if (password !== adminPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
