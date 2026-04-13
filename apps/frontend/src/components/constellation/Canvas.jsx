@@ -140,21 +140,41 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .attr('opacity', 0.3)
       .attr('stroke-dasharray', (d) => (d.type === 'partner' ? '5,5' : 'none'));
 
-    // Prepare constellation labels container
+    // Prepare constellation labels with father's surname
     const constellationLabels = g.selectAll('.constellation-label').data(families || []).enter().append('text')
       .attr('class', 'constellation-label')
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
-      .attr('font-size', '32px')
-      .attr('font-weight', '200')
-      .attr('letter-spacing', '6px')
+      .attr('font-size', (d) => window.innerWidth < 640 ? '48px' : '64px')
+      .attr('font-weight', '100')
+      .attr('letter-spacing', '8px')
       .attr('fill', (d) => `#${d.color_hex}`)
-      .attr('opacity', 0.12)
+      .attr('opacity', (d) => window.innerWidth < 640 ? 0.25 : 0.12)
       .attr('pointer-events', 'none')
-      .attr('text-transform', 'uppercase')
       .style('font-family', 'Segoe UI, sans-serif')
       .style('text-shadow', 'none')
-      .text((d) => d.name.toUpperCase());
+      // Position at centroid of family nodes
+      .attr('x', (family) => {
+        const familyNodes = nodes.filter((n) => n.family_id === family.id);
+        return familyNodes.length > 0
+          ? familyNodes.reduce((sum, n) => sum + (n.x || CANVAS_WIDTH / 2), 0) / familyNodes.length
+          : CANVAS_WIDTH / 2;
+      })
+      .attr('y', (family) => {
+        const familyNodes = nodes.filter((n) => n.family_id === family.id);
+        return familyNodes.length > 0
+          ? familyNodes.reduce((sum, n) => sum + (n.y || CANVAS_HEIGHT / 2), 0) / familyNodes.length
+          : CANVAS_HEIGHT / 2;
+      })
+      // Show father's last name instead of family name
+      .text((family) => {
+        // Find father (assuming first Fulgencio Marín or equivalent from persons with status approved)
+        const fatherNode = nodes.find((n) => {
+          const person = persons.find((p) => p.id === n.id);
+          return person && person.family_id === family.id && person.last_name;
+        });
+        return fatherNode ? fatherNode.name.split(' ').pop().toUpperCase() : family.name.toUpperCase();
+      });
 
     // Draw pulsing halo effect for each star
     const halos = g
