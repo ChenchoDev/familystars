@@ -38,14 +38,20 @@ export default function PersonsPanel({ onPendingCountChange }) {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [personsResponse, familiesResponse] = await Promise.all([
         personsAPI.list(),
         familiesAPI.list(),
       ]);
-      setPersons(Array.isArray(personsResponse.data) ? personsResponse.data : []);
-      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
+      console.log('Persons response:', personsResponse);
+      console.log('Families response:', familiesResponse);
+      const personsData = Array.isArray(personsResponse.data) ? personsResponse.data : [];
+      const familiesData = Array.isArray(familiesResponse.data) ? familiesResponse.data : [];
+      setPersons(personsData);
+      setFamilies(familiesData);
     } catch (err) {
-      setError(err.message);
+      console.error('PersonsPanel fetch error:', err);
+      setError(err?.message || 'Error al cargar datos');
       setPersons([]);
       setFamilies([]);
     } finally {

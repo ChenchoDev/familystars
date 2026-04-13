@@ -25,8 +25,11 @@ export default function FamiliesPanel({ onPendingCountChange }) {
   const fetchFamilies = async () => {
     try {
       setLoading(true);
+      setError(null);
       const familiesResponse = await familiesAPI.list();
-      setFamilies(familiesResponse.data);
+      console.log('Families response:', familiesResponse);
+      const familiesData = Array.isArray(familiesResponse.data) ? familiesResponse.data : [];
+      setFamilies(familiesData);
 
       // Get persons count by family
       try {
@@ -45,7 +48,9 @@ export default function FamiliesPanel({ onPendingCountChange }) {
         // Continue without person counts
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Families fetch error:', err);
+      setError(err?.message || 'Error al cargar familias');
+      setFamilies([]);
     } finally {
       setLoading(false);
     }

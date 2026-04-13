@@ -37,17 +37,22 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [relResponse, personsResponse, familiesResponse] = await Promise.all([
         relationshipsAPI.list(),
         personsAPI.list(),
         familiesAPI.list(),
       ]);
-      setRelationships(Array.isArray(relResponse.data) ? relResponse.data : []);
+      console.log('Relationships response:', relResponse);
+      const relData = Array.isArray(relResponse.data) ? relResponse.data : [];
       const personsData = Array.isArray(personsResponse.data) ? personsResponse.data : [];
+      const familiesData = Array.isArray(familiesResponse.data) ? familiesResponse.data : [];
+      setRelationships(relData);
       setPersons(personsData.filter((p) => p.status === 'approved'));
-      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
+      setFamilies(familiesData);
     } catch (err) {
-      setError(err.message);
+      console.error('RelationshipsPanel fetch error:', err);
+      setError(err?.message || 'Error al cargar datos');
       setRelationships([]);
       setPersons([]);
       setFamilies([]);

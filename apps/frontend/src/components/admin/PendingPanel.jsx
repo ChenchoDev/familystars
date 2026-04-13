@@ -15,13 +15,16 @@ export default function PendingPanel({ onPendingCountChange }) {
   const fetchPending = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [pendingResponse, familiesResponse] = await Promise.all([
         adminAPI.getPending(),
         familiesAPI.list(),
       ]);
+      console.log('Pending response:', pendingResponse);
       const pendingData = pendingResponse.data || pendingResponse;
       setPending(pendingData);
-      setFamilies(Array.isArray(familiesResponse.data) ? familiesResponse.data : []);
+      const familiesData = Array.isArray(familiesResponse.data) ? familiesResponse.data : [];
+      setFamilies(familiesData);
 
       // Update parent pending count
       const totalPending =
@@ -29,7 +32,8 @@ export default function PendingPanel({ onPendingCountChange }) {
         (Array.isArray(pendingData?.pending_relationships) ? pendingData.pending_relationships.length : 0);
       onPendingCountChange(totalPending);
     } catch (err) {
-      setError(err.message);
+      console.error('PendingPanel fetch error:', err);
+      setError(err?.message || 'Error al cargar pendientes');
       setPending(null);
       setFamilies([]);
     } finally {
