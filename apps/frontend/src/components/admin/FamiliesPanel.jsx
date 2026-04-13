@@ -29,14 +29,21 @@ export default function FamiliesPanel({ onPendingCountChange }) {
       setFamilies(familiesResponse.data);
 
       // Get persons count by family
-      const personsResponse = await personsAPI.list();
-      const counts = {};
-      personsResponse.data.forEach((p) => {
-        if (p.family_id) {
-          counts[p.family_id] = (counts[p.family_id] || 0) + 1;
+      try {
+        const personsResponse = await personsAPI.list();
+        const counts = {};
+        if (Array.isArray(personsResponse.data)) {
+          personsResponse.data.forEach((p) => {
+            if (p.family_id) {
+              counts[p.family_id] = (counts[p.family_id] || 0) + 1;
+            }
+          });
         }
-      });
-      setPersonsCounts(counts);
+        setPersonsCounts(counts);
+      } catch (personErr) {
+        console.error('Error fetching persons:', personErr);
+        // Continue without person counts
+      }
     } catch (err) {
       setError(err.message);
     } finally {
