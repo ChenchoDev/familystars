@@ -57,6 +57,8 @@ export default function StatsPanel({ onPendingCountChange }) {
 
   if (!stats) return null;
 
+  const validRecentPersons = Array.isArray(recentPersons) ? recentPersons : [];
+
   const StatCard = ({ label, value, icon }) => (
     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
       <div className="flex items-center justify-between">
@@ -86,11 +88,11 @@ export default function StatsPanel({ onPendingCountChange }) {
       {/* Recent Persons */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6">
         <h3 className="text-white text-lg font-bold mb-4">Últimas personas añadidas</h3>
-        {recentPersons.length === 0 ? (
+        {validRecentPersons.length === 0 ? (
           <p className="text-gray-400 text-sm">No hay personas aún</p>
         ) : (
           <div className="space-y-3">
-            {recentPersons.map((person) => (
+            {validRecentPersons.map((person) => (
               <div
                 key={person.id}
                 className="flex items-center gap-4 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"

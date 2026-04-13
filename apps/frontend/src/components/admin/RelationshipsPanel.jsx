@@ -56,11 +56,13 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     }
   };
 
+  const validPersons = Array.isArray(persons) ? persons : [];
+
   const handleSearchA = (term) => {
     setSearchPersonA(term);
     if (term.trim()) {
       setFilteredPersonsA(
-        persons.filter(
+        validPersons.filter(
           (p) =>
             `${p.first_name} ${p.last_name}`.toLowerCase().includes(term.toLowerCase()) &&
             p.id !== parseInt(formData.person_b_id)
@@ -75,7 +77,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     setSearchPersonB(term);
     if (term.trim()) {
       setFilteredPersonsB(
-        persons.filter(
+        validPersons.filter(
           (p) =>
             `${p.first_name} ${p.last_name}`.toLowerCase().includes(term.toLowerCase()) &&
             p.id !== parseInt(formData.person_a_id)

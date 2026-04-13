@@ -53,7 +53,10 @@ export default function PersonsPanel({ onPendingCountChange }) {
     }
   };
 
-  const filteredPersons = persons.filter((p) => {
+  const validPersons = Array.isArray(persons) ? persons : [];
+  const validFamilies = Array.isArray(families) ? families : [];
+
+  const filteredPersons = validPersons.filter((p) => {
     const matchesFamily = !filterFamily || p.family_id === parseInt(filterFamily);
     const matchesStatus = !filterStatus || p.status === filterStatus;
     const matchesSearch =
@@ -161,12 +164,12 @@ export default function PersonsPanel({ onPendingCountChange }) {
   };
 
   const getFamilyColor = (familyId) => {
-    const family = families.find((f) => f.id === familyId);
+    const family = validFamilies.find((f) => f.id === familyId);
     return family ? family.color_hex : '999999';
   };
 
   const getFamilyName = (familyId) => {
-    const family = families.find((f) => f.id === familyId);
+    const family = validFamilies.find((f) => f.id === familyId);
     return family?.name || 'Sin familia';
   };
 
@@ -249,7 +252,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
                   className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="">Selecciona una familia</option>
-                  {families.map((f) => (
+                  {validFamilies.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name}
                     </option>
@@ -425,7 +428,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
                 className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full"
               >
                 <option value="">Todas</option>
-                {families.map((f) => (
+                {validFamilies.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
                   </option>

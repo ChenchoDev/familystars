@@ -110,6 +110,8 @@ export default function FamiliesPanel({ onPendingCountChange }) {
     );
   }
 
+  const validFamilies = Array.isArray(families) ? families : [];
+
   return (
     <div className="space-y-6">
       {/* Button */}
@@ -202,14 +204,14 @@ export default function FamiliesPanel({ onPendingCountChange }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {families.length === 0 ? (
+            {validFamilies.length === 0 ? (
               <tr>
                 <td colSpan="5" className="px-6 py-4 text-center text-gray-400">
                   No hay familias aún
                 </td>
               </tr>
             ) : (
-              families.map((family) => (
+              validFamilies.map((family) => (
                 <tr key={family.id} className="hover:bg-gray-700 transition-colors">
                   <td className="px-6 py-4">
                     <div

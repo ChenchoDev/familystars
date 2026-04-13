@@ -82,13 +82,15 @@ export default function PendingPanel({ onPendingCountChange }) {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const validFamilies = Array.isArray(families) ? families : [];
+
   const getFamilyName = (familyId) => {
-    const family = families.find((f) => f.id === familyId);
+    const family = validFamilies.find((f) => f.id === familyId);
     return family?.name || 'Sin familia';
   };
 
   const getFamilyColor = (familyId) => {
-    const family = families.find((f) => f.id === familyId);
+    const family = validFamilies.find((f) => f.id === familyId);
     return family?.color_hex || '999999';
   };
 
