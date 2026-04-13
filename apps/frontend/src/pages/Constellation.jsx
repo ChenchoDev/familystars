@@ -37,11 +37,15 @@ export default function Constellation() {
       ]);
 
       // Check if we have valid data
-      // Backend returns { data: [...], total: N }, so access personsRes.data.data
-      if (personsRes?.data?.data && personsRes.data.data.length > 0 && familiesRes?.data) {
-        setPersons(personsRes.data.data);
-        setFamilies(familiesRes.data);
-        setRelationships(relationshipsRes.data || []);
+      // Backend returns { data: [...] }, so access .data.data for persons/relationships
+      const persons = personsRes?.data?.data || [];
+      const families = familiesRes?.data?.data || familiesRes?.data || [];
+      const relationships = relationshipsRes?.data?.data || relationshipsRes?.data || [];
+
+      if (persons.length > 0 && families.length > 0) {
+        setPersons(persons);
+        setFamilies(families);
+        setRelationships(relationships);
       } else {
         // Use mock data if API returns empty
         throw new Error('No persons in database');
