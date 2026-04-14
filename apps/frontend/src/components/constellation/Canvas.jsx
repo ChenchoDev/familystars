@@ -140,6 +140,23 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .attr('opacity', 0.3)
       .attr('stroke-dasharray', (d) => (d.type === 'partner' ? '5,5' : 'none'));
 
+    // ── CLIP PATHS para avatares (en svg raíz, no en g) ──
+    const defs = svg.select('defs').empty()
+      ? svg.insert('defs', ':first-child')
+      : svg.select('defs');
+
+    nodes.forEach((n) => {
+      const person = persons.find((p) => p.id === n.id);
+      if (person?.avatar) {
+        defs.append('clipPath')
+          .attr('id', `clip-${n.id}`)
+          .append('circle')
+          .attr('r', STAR_RADIUS)
+          .attr('cx', n.x || 0)
+          .attr('cy', n.y || 0);
+      }
+    });
+
     // Prepare constellation labels with father's surname
     const constellationLabels = g.selectAll('.constellation-label').data(families || []).enter().append('text')
       .attr('class', 'constellation-label')
@@ -276,27 +293,15 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         }
       });
 
-    // Add clip paths and avatar images
-    const defs = g.append('defs');
-
-    nodes.forEach((node) => {
-      const person = persons.find((p) => p.id === node.id);
-      if (person?.avatar) {
-        defs.append('clipPath')
-          .attr('id', `clip-${node.id}`)
-          .append('circle')
-          .attr('r', STAR_RADIUS)
-          .attr('cx', 0)
-          .attr('cy', 0);
-      }
+    // ── AVATAR IMAGES (después de círculos, antes de labels) ──
+    const nodesWithAvatar = nodes.filter((n) => {
+      const person = persons.find((p) => p.id === n.id);
+      return !!person?.avatar;
     });
 
     const images = g
       .selectAll('image.star-avatar')
-      .data(nodes.filter((d) => {
-        const person = persons.find((p) => p.id === d.id);
-        return person?.avatar;
-      }))
+      .data(nodesWithAvatar, (d) => d.id)
       .enter()
       .append('image')
       .attr('class', 'star-avatar')
@@ -306,11 +311,12 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       })
       .attr('width', STAR_RADIUS * 2)
       .attr('height', STAR_RADIUS * 2)
-      .attr('x', (d) => d.x - STAR_RADIUS)
-      .attr('y', (d) => d.y - STAR_RADIUS)
+      .attr('x', (d) => (d.x || 0) - STAR_RADIUS)
+      .attr('y', (d) => (d.y || 0) - STAR_RADIUS)
       .attr('clip-path', (d) => `url(#clip-${d.id})`)
       .attr('preserveAspectRatio', 'xMidYMid slice')
       .style('cursor', 'pointer')
+      .style('pointer-events', 'all')
       .on('click', (event, d) => {
         event.stopPropagation();
         const person = persons.find((p) => p.id === d.id);
@@ -352,14 +358,15 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         .attr('x', (d) => d.x - STAR_RADIUS)
         .attr('y', (d) => d.y - STAR_RADIUS);
 
-      // Update clip paths positions
-      defs.selectAll('clipPath circle')
-        .data(nodes.filter((n) => {
-          const person = persons.find((p) => p.id === n.id);
-          return person?.avatar;
-        }), (d) => d.id)
-        .attr('cx', (d) => d.x)
-        .attr('cy', (d) => d.y);
+      // Actualizar posición de clipPaths
+      nodes.forEach((n) => {
+        const person = persons.find((p) => p.id === n.id);
+        if (person?.avatar) {
+          defs.select(`#clip-${n.id} circle`)
+            .attr('cx', n.x || 0)
+            .attr('cy', n.y || 0);
+        }
+      });
 
       labels.attr('x', (d) => d.x).attr('y', (d) => d.y + STAR_RADIUS + 20);
 
