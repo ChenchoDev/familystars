@@ -30,6 +30,13 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     person_b_id: '',
     notes: '',
   });
+  const [addChildFor, setAddChildFor] = useState(null);
+  const [childForm, setChildForm] = useState({
+    first_name: '',
+    last_name: '',
+    birth_date: '',
+    family_id: '',
+  });
 
   useEffect(() => {
     fetchData();
@@ -183,6 +190,95 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     setFilteredPersonsA([]);
     setFilteredPersonsB([]);
     setShowForm(false);
+    setAddChildFor(null);
+    setChildForm({ first_name: '', last_name: '', birth_date: '', family_id: '' });
+  };
+
+  const handleAddChild = (rel) => {
+    const parentA = persons.find(p => p.id === rel.person_a_id);
+    const parentB = persons.find(p => p.id === rel.person_b_id);
+
+    setAddChildFor({ rel, parentA, parentB });
+    setChildForm({
+      first_name: '',
+      last_name: parentA && parentB
+        ? `${parentA.last_name} ${parentB.last_name}`
+        : '',
+      birth_date: '',
+      family_id: parentA?.family_id || '',
+    });
+  };
+
+  const handleSubmitChild = async () => {
+    if (!childForm.first_name || !childForm.last_name || !childForm.family_id) return;
+
+    try {
+      // 1. Crear la persona
+      const personRes = await personsAPI.create({
+        first_name: childForm.first_name,
+        last_name: childForm.last_name,
+        birth_date: childForm.birth_date || '',
+        family_id: childForm.family_id,
+        birth_place: '',
+        current_location: '',
+        bio: '',
+        status: 'approved',
+      });
+
+      const newPersonId = personRes.data?.id || personRes.data?.data?.id;
+      if (!newPersonId) throw new Error('No se pudo obtener el ID de la persona creada');
+
+      const parentAId = addChildFor.rel.person_a_id;
+      const parentBId = addChildFor.rel.person_b_id;
+
+      // 2. Crear relación padre A → hijo
+      await relationshipsAPI.create({
+        person_a_id: parentAId,
+        person_b_id: newPersonId,
+        type: 'parent',
+        notes: '',
+        verified: true,
+      });
+
+      // 3. Crear relación padre B → hijo
+      await relationshipsAPI.create({
+        person_a_id: parentBId,
+        person_b_id: newPersonId,
+        type: 'parent',
+        notes: '',
+        verified: true,
+      });
+
+      // 4. Buscar hermanos existentes (mismos padres)
+      const siblings = persons.filter(p => {
+        const hasParentA = relationships.some(
+          r => r.person_a_id === parentAId && r.person_b_id === p.id && r.type === 'parent'
+        );
+        const hasParentB = relationships.some(
+          r => r.person_a_id === parentBId && r.person_b_id === p.id && r.type === 'parent'
+        );
+        return hasParentA && hasParentB && p.id !== newPersonId;
+      });
+
+      // 5. Crear relaciones sibling
+      for (const sibling of siblings) {
+        await relationshipsAPI.create({
+          person_a_id: newPersonId,
+          person_b_id: sibling.id,
+          type: 'sibling',
+          notes: '',
+          verified: true,
+        });
+      }
+
+      const totalRelations = 2 + siblings.length; // 2 parents + N siblings
+      showToast(`${childForm.first_name} creado/a con ${totalRelations} relaciones`);
+      setAddChildFor(null);
+      setChildForm({ first_name: '', last_name: '', birth_date: '', family_id: '' });
+      fetchData();
+    } catch (err) {
+      showToast(err.message || 'Error al crear', 'error');
+    }
   };
 
   const showToast = (message, type = 'success') => {
@@ -431,6 +527,14 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm space-x-2">
+                      {rel.type === 'partner' && (
+                        <button
+                          onClick={() => handleAddChild(rel)}
+                          className="text-green-400 hover:text-green-300 font-medium transition-colors"
+                        >
+                          + Hijo
+                        </button>
+                      )}
                       <button
                         onClick={() => handleEdit(rel)}
                         className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
@@ -449,6 +553,97 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Add Child Modal */}
+      {addChildFor && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-white text-lg font-bold mb-2">Añadir hijo</h3>
+            <p className="text-gray-400 text-sm mb-4">
+              Hijo de{' '}
+              <span className="text-purple-400">
+                {addChildFor.parentA?.first_name} {addChildFor.parentA?.last_name}
+              </span>
+              {' '}y{' '}
+              <span className="text-purple-400">
+                {addChildFor.parentB?.first_name} {addChildFor.parentB?.last_name}
+              </span>
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-gray-300 text-sm font-medium block mb-1">
+                    Nombre *
+                  </label>
+                  <input
+                    type="text"
+                    value={childForm.first_name}
+                    onChange={e => setChildForm({ ...childForm, first_name: e.target.value })}
+                    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-300 text-sm font-medium block mb-1">
+                    Apellidos *
+                  </label>
+                  <input
+                    type="text"
+                    value={childForm.last_name}
+                    onChange={e => setChildForm({ ...childForm, last_name: e.target.value })}
+                    className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-gray-300 text-sm font-medium block mb-1">
+                  Fecha de nacimiento
+                </label>
+                <input
+                  type="date"
+                  value={childForm.birth_date}
+                  onChange={e => setChildForm({ ...childForm, birth_date: e.target.value })}
+                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-300 text-sm font-medium block mb-1">
+                  Familia
+                </label>
+                <select
+                  value={childForm.family_id}
+                  onChange={e => setChildForm({ ...childForm, family_id: e.target.value })}
+                  className="bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Selecciona familia</option>
+                  {families.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSubmitChild}
+                disabled={!childForm.first_name || !childForm.last_name || !childForm.family_id}
+                className="bg-purple-700 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Crear y vincular
+              </button>
+              <button
+                onClick={() => setAddChildFor(null)}
+                className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
