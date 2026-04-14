@@ -442,6 +442,22 @@ export default function ConstellationCanvas({ persons, families, relationships, 
             () => currentTransformRef.current
           );
         }
+
+        // En móvil, limpiar partículas automáticamente tras 2.5 segundos
+        if (window.innerWidth < 768) {
+          setTimeout(() => {
+            if (particleAnimRef.current) {
+              cancelAnimationFrame(particleAnimRef.current);
+              particleAnimRef.current = null;
+            }
+            activeParticlesRef.current = [];
+            if (particleCanvasRef.current) {
+              const ctx = particleCanvasRef.current.getContext('2d');
+              particleCanvasRef.current.width = particleCanvasRef.current.width;
+              ctx.clearRect(0, 0, particleCanvasRef.current.width, particleCanvasRef.current.height);
+            }
+          }, 2500);
+        }
       });
 
     // ── AVATAR IMAGES (después de círculos, antes de labels) ──
