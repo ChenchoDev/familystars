@@ -196,17 +196,13 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
 
   const handleAddChild = (rel) => {
     console.log('REL:', JSON.stringify(rel));
-    const parentA = persons.find(p => p.id === rel.person_a_id);
-    const parentB = persons.find(p => p.id === rel.person_b_id);
-
-    setAddChildFor({ rel, parentA, parentB });
+    setAddChildFor({ rel, parentA: rel.person_a, parentB: rel.person_b });
+    console.log('addChildFor seteado');
     setChildForm({
       first_name: '',
-      last_name: parentA && parentB
-        ? `${parentA.last_name} ${parentB.last_name}`
-        : '',
+      last_name: '',
       birth_date: '',
-      family_id: parentA?.family_id || '',
+      family_id: '',
     });
   };
 
