@@ -32,9 +32,9 @@ export const schemas = {
     first_name: Joi.string().max(100).required(),
     last_name: Joi.string().max(100).required(),
     birth_date: Joi.date().optional(),
-    birth_place: Joi.string().max(255).optional(),
-    current_location: Joi.string().max(255).optional(),
-    bio: Joi.string().max(500).optional(),
+    birth_place: Joi.string().max(255).optional().allow(''),
+    current_location: Joi.string().max(255).optional().allow(''),
+    bio: Joi.string().max(500).optional().allow(''),
     family_id: Joi.string().uuid().required(),
   }),
   family: Joi.object({
