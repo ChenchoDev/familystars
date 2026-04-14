@@ -1,4 +1,4 @@
-const CACHE_NAME = 'familystars-v1';
+const CACHE_NAME = 'familystars-v2';
 const urlsToCache = [
   '/',
   '/index.html',

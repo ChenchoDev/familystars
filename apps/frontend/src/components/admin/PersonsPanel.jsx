@@ -587,7 +587,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 max-w-sm">
             <h3 className="text-white font-bold text-lg mb-4">Confirmar eliminación</h3>
             <p className="text-gray-300 mb-6">
