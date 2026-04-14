@@ -23,6 +23,9 @@ export const getPhotos = async (req, res) => {
 
 // POST /persons/:person_id/photos
 export const uploadPhoto = async (req, res) => {
+  console.log('BODY RECIBIDO:', JSON.stringify(req.body));
+  console.log('USER:', req.user?.role);
+
   const { person_id } = req.params;
   const { cloudinary_url, caption, year } = req.body;
 
