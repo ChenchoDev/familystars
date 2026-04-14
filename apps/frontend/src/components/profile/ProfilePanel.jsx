@@ -30,9 +30,15 @@ export default function ProfilePanel({ person, families, relationships, persons,
   const birthYear = person.birth_date ? new Date(person.birth_date).getFullYear() : null;
 
   const relatedPersons = relationships
-    .filter((rel) => rel.person_a_id === person.id || rel.person_b_id === person.id)
+    .filter((rel) => {
+      const aId = rel.person_a?.id || rel.person_a_id;
+      const bId = rel.person_b?.id || rel.person_b_id;
+      return aId === person.id || bId === person.id;
+    })
     .map((rel) => {
-      const relatedId = rel.person_a_id === person.id ? rel.person_b_id : rel.person_a_id;
+      const aId = rel.person_a?.id || rel.person_a_id;
+      const bId = rel.person_b?.id || rel.person_b_id;
+      const relatedId = aId === person.id ? bId : aId;
       return {
         person: persons.find((p) => p.id === relatedId),
         type: rel.type,
