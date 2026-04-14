@@ -70,7 +70,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         validPersons.filter(
           (p) =>
             `${p.first_name} ${p.last_name}`.toLowerCase().includes(term.toLowerCase()) &&
-            p.id !== parseInt(formData.person_b_id)
+            p.id !== formData.person_b_id
         )
       );
     } else {
@@ -85,7 +85,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         validPersons.filter(
           (p) =>
             `${p.first_name} ${p.last_name}`.toLowerCase().includes(term.toLowerCase()) &&
-            p.id !== parseInt(formData.person_a_id)
+            p.id !== formData.person_a_id
         )
       );
     } else {
@@ -110,10 +110,10 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       // Check if relationship already exists
       const exists = relationships.some(
         (r) =>
-          (r.person_a_id === parseInt(formData.person_a_id) &&
-            r.person_b_id === parseInt(formData.person_b_id)) ||
-          (r.person_a_id === parseInt(formData.person_b_id) &&
-            r.person_b_id === parseInt(formData.person_a_id))
+          (r.person_a_id === formData.person_a_id &&
+            r.person_b_id === formData.person_b_id) ||
+          (r.person_a_id === formData.person_b_id &&
+            r.person_b_id === formData.person_a_id)
       );
 
       if (exists) {
@@ -122,9 +122,9 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       }
 
       await relationshipsAPI.create({
-        person_a_id: parseInt(formData.person_a_id),
+        person_a_id: formData.person_a_id,
         type: formData.type,
-        person_b_id: parseInt(formData.person_b_id),
+        person_b_id: formData.person_b_id,
         notes: formData.notes || null,
         verified: true,
       });
@@ -378,7 +378,9 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                 relationships.map((rel) => (
                   <tr key={rel.id} className="hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 text-white font-medium">
-                      {getPersonName(rel.person_a_id)}
+                      {rel.person_a
+                        ? `${rel.person_a.first_name} ${rel.person_a.last_name}`
+                        : getPersonName(rel.person_a_id)}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -390,7 +392,9 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-white font-medium">
-                      {getPersonName(rel.person_b_id)}
+                      {rel.person_b
+                        ? `${rel.person_b.first_name} ${rel.person_b.last_name}`
+                        : getPersonName(rel.person_b_id)}
                     </td>
                     <td className="px-6 py-4">
                       <span

@@ -17,6 +17,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS families (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL UNIQUE,
+  display_name VARCHAR(100),
   color_hex CHAR(6) NOT NULL,
   description TEXT,
   admin_id UUID NOT NULL,
@@ -127,10 +128,10 @@ async function runMigrations() {
 
     // Insert initial families
     const initialFamilies = [
-      { name: 'Paterna', color: '9B59B6', description: 'Familia del padre (apellido paterno)' },
-      { name: 'Materna', color: '3498DB', description: 'Familia de la madre (apellido materno)' },
-      { name: 'Política 1', color: 'F39C12', description: 'Familia de la esposa' },
-      { name: 'Política 2', color: '27AE60', description: 'Familia de cuñados' },
+      { name: 'Paterna', display_name: 'MARÍN', color: '9B59B6', description: 'Familia del padre (apellido paterno)' },
+      { name: 'Materna', display_name: 'TALAVERA', color: '3498DB', description: 'Familia de la madre (apellido materno)' },
+      { name: 'Política 1', display_name: 'GARCÍA', color: 'F39C12', description: 'Familia de la esposa' },
+      { name: 'Política 2', display_name: 'FAMILIA 2', color: '27AE60', description: 'Familia de cuñados' },
     ];
 
     // Create system admin user first
@@ -143,8 +144,8 @@ async function runMigrations() {
     console.log('🔄 Inserting initial families...');
     for (const family of initialFamilies) {
       const result = await client.query(
-        'INSERT INTO families (name, color_hex, description, admin_id) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id',
-        [family.name, family.color, family.description, SYSTEM_ADMIN_ID]
+        'INSERT INTO families (name, display_name, color_hex, description, admin_id) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING RETURNING id',
+        [family.name, family.display_name, family.color, family.description, SYSTEM_ADMIN_ID]
       );
       if (result.rows.length > 0) {
         console.log(`  ✅ Created family: ${family.name}`);

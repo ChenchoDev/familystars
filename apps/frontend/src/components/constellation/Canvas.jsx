@@ -166,14 +166,9 @@ export default function ConstellationCanvas({ persons, families, relationships, 
           ? familyNodes.reduce((sum, n) => sum + (n.y || CANVAS_HEIGHT / 2), 0) / familyNodes.length
           : CANVAS_HEIGHT / 2;
       })
-      // Show father's last name instead of family name
+      // Use display_name from family, fallback to name
       .text((family) => {
-        // Find father (assuming first Fulgencio Marín or equivalent from persons with status approved)
-        const fatherNode = nodes.find((n) => {
-          const person = persons.find((p) => p.id === n.id);
-          return person && person.family_id === family.id && person.last_name;
-        });
-        return fatherNode ? fatherNode.name.split(' ').pop().toUpperCase() : family.name.toUpperCase();
+        return (family.display_name || family.name).toUpperCase();
       });
 
     // Draw pulsing halo effect for each star

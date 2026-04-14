@@ -63,7 +63,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
   const validFamilies = Array.isArray(families) ? families : [];
 
   const filteredPersons = validPersons.filter((p) => {
-    const matchesFamily = !filterFamily || p.family_id === parseInt(filterFamily);
+    const matchesFamily = !filterFamily || p.family_id === filterFamily;
     const matchesStatus = !filterStatus || p.status === filterStatus;
     const matchesSearch =
       !searchTerm ||
@@ -82,7 +82,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
     try {
       const data = {
         ...formData,
-        family_id: parseInt(formData.family_id),
+        family_id: formData.family_id,
         status: 'approved',
       };
 
