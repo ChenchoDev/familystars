@@ -53,6 +53,19 @@ export const uploadPhoto = async (req, res) => {
 
     const photo = result.rows[0];
 
+    // Si la persona no tiene avatar, usar esta foto como avatar automáticamente
+    const personCheck = await pool.query(
+      'SELECT avatar_url FROM persons WHERE id = $1',
+      [person_id]
+    );
+
+    if (!personCheck.rows[0]?.avatar_url) {
+      await pool.query(
+        'UPDATE persons SET avatar_url = $1, updated_at = NOW() WHERE id = $2',
+        [cloudinary_url, person_id]
+      );
+    }
+
     // Notify admin if pending
     if (!approved) {
       await sendAdminNotification(

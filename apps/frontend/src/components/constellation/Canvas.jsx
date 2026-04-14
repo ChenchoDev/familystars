@@ -276,6 +276,31 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         }
       });
 
+    // Add clip paths and avatar images
+    const defs = g.append('defs');
+
+    nodes.forEach((node) => {
+      defs.append('clipPath')
+        .attr('id', `clip-${node.id}`)
+        .append('circle')
+        .attr('r', STAR_RADIUS);
+    });
+
+    const images = g
+      .selectAll('image.star-avatar')
+      .data(nodes.filter((d) => d.avatar))
+      .enter()
+      .append('image')
+      .attr('class', 'star-avatar')
+      .attr('href', (d) => d.avatar)
+      .attr('width', STAR_RADIUS * 2)
+      .attr('height', STAR_RADIUS * 2)
+      .attr('x', (d) => d.x - STAR_RADIUS)
+      .attr('y', (d) => d.y - STAR_RADIUS)
+      .attr('clip-path', (d) => `url(#clip-${d.id})`)
+      .attr('preserveAspectRatio', 'xMidYMid slice')
+      .style('pointer-events', 'none');
+
     // Draw name labels under stars
     const labels = g
       .selectAll('.star-label')
@@ -306,6 +331,10 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       glows.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
 
       halos.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
+
+      images
+        .attr('x', (d) => d.x - STAR_RADIUS)
+        .attr('y', (d) => d.y - STAR_RADIUS);
 
       labels.attr('x', (d) => d.x).attr('y', (d) => d.y + STAR_RADIUS + 20);
 

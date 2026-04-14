@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { personsAPI, familiesAPI } from '../../api/client';
+import PhotoUploader from './PhotoUploader';
 
 export default function PersonsPanel({ onPendingCountChange }) {
   const [persons, setPersons] = useState([]);
@@ -14,6 +15,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showPhotos, setShowPhotos] = useState(null);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -541,6 +543,12 @@ export default function PersonsPanel({ onPendingCountChange }) {
                       </td>
                       <td className="px-6 py-4 text-sm space-x-2">
                         <button
+                          onClick={() => setShowPhotos(person)}
+                          className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                        >
+                          📸 Fotos
+                        </button>
+                        <button
                           onClick={() => handleEdit(person)}
                           className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
                         >
@@ -609,6 +617,23 @@ export default function PersonsPanel({ onPendingCountChange }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Photo Uploader Modal */}
+      {showPhotos && (
+        <PhotoUploader
+          person={showPhotos}
+          onClose={() => setShowPhotos(null)}
+          onSuccess={(avatarUrl) => {
+            setPersons(prev =>
+              prev.map(p =>
+                p.id === showPhotos.id
+                  ? { ...p, avatar_url: avatarUrl }
+                  : p
+              )
+            );
+          }}
+        />
       )}
 
       {/* Toast */}
