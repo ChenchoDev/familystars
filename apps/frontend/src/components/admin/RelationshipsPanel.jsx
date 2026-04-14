@@ -121,13 +121,15 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         return;
       }
 
-      await relationshipsAPI.create({
+      const relationshipData = {
         person_a_id: formData.person_a_id,
         type: formData.type,
         person_b_id: formData.person_b_id,
         notes: formData.notes || null,
         verified: true,
-      });
+      };
+      console.log('📤 Datos enviados (relación):', relationshipData);
+      await relationshipsAPI.create(relationshipData);
 
       showToast('Relación creada correctamente');
       setFormData({ person_a_id: '', type: '', person_b_id: '', notes: '' });
@@ -136,6 +138,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       setShowForm(false);
       fetchData();
     } catch (err) {
+      console.error('❌ Error desde backend:', err.response?.data || err.message);
       showToast(err.message, 'error');
     }
   };

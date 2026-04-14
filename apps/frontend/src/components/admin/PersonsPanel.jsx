@@ -87,9 +87,11 @@ export default function PersonsPanel({ onPendingCountChange }) {
       };
 
       if (editingId) {
+        console.log('📤 Datos enviados (update):', data);
         await personsAPI.update(editingId, data);
         showToast('Persona actualizada correctamente');
       } else {
+        console.log('📤 Datos enviados (create):', data);
         await personsAPI.create(data);
         showToast('Persona creada correctamente');
       }
@@ -111,6 +113,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
       setShowForm(false);
       fetchData();
     } catch (err) {
+      console.error('❌ Error desde backend:', err.response?.data || err.message);
       showToast(err.message, 'error');
     }
   };
