@@ -83,6 +83,12 @@ export default function PhotoUploader({ person, onClose, onSuccess }) {
       setUploading(true);
 
       // 1. Guardar en person_photos
+      console.log('ENVIANDO FOTO:', {
+        cloudinary_url: cloudinaryUrl,
+        caption: caption,
+        year: year ? parseInt(year) : null,
+      });
+
       await photosAPI.upload(person.id, {
         cloudinary_url: cloudinaryUrl,
         caption: caption || '',
