@@ -49,4 +49,9 @@ export const schemas = {
     type: Joi.string().valid('parent', 'child', 'partner', 'sibling', 'cousin', 'other').required(),
     notes: Joi.string().optional().allow('').allow(null),
   }),
+  photo: Joi.object({
+    cloudinary_url: Joi.string().uri().required(),
+    caption: Joi.string().optional().allow('').allow(null),
+    year: Joi.number().optional().allow(null),
+  }),
 };
