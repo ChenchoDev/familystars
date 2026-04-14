@@ -86,6 +86,9 @@ export default function PersonsPanel({ onPendingCountChange }) {
         ...formData,
         family_id: formData.family_id,
         status: 'approved',
+        // Convertir strings vacíos a null para las fechas
+        birth_date: formData.birth_date || null,
+        death_date: formData.death_date || null,
       };
 
       if (editingId) {
