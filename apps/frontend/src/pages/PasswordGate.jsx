@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'fs_access_granted';
-const CORRECT_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || 'estrellas2026';
 
 export default function PasswordGate({ children }) {
   const [granted, setGranted] = useState(false);
@@ -13,19 +12,31 @@ export default function PasswordGate({ children }) {
   // Comprobar si ya tiene acceso guardado
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === CORRECT_PASSWORD) {
+    if (saved === 'granted') {
       setGranted(true);
     }
     setLoading(false);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (input.trim().toLowerCase() === CORRECT_PASSWORD.toLowerCase()) {
-      localStorage.setItem(STORAGE_KEY, CORRECT_PASSWORD);
-      setGranted(true);
-      setError(false);
-    } else {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/check-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: input }),
+      });
+      if (res.ok) {
+        localStorage.setItem(STORAGE_KEY, 'granted');
+        setGranted(true);
+        setError(false);
+      } else {
+        setError(true);
+        setShake(true);
+        setInput('');
+        setTimeout(() => setShake(false), 600);
+      }
+    } catch {
       setError(true);
       setShake(true);
       setInput('');

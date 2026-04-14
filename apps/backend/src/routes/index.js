@@ -18,6 +18,15 @@ router.post('/auth/magic-link', validate(schemas.magicLink), authController.requ
 router.get('/auth/verify/:token', authController.verifyMagicLink);
 router.get('/auth/me', requireAuth, authController.getCurrentUser);
 router.post('/auth/invite', requireAuth, requireRole('admin'), validate(schemas.invite), authController.generateInvite);
+router.post('/auth/check-password', (req, res) => {
+  const { password } = req.body;
+  const correct = process.env.ACCESS_PASSWORD;
+  if (password === correct) {
+    res.json({ ok: true });
+  } else {
+    res.status(401).json({ ok: false });
+  }
+});
 
 // ===== PERSONS ROUTES =====
 router.get('/persons', personsController.listPersons);
