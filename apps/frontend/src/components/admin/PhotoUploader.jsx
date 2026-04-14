@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { photosAPI, personsAPI } from '../../api/client';
+import client, { photosAPI, personsAPI } from '../../api/client';
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -89,7 +89,7 @@ export default function PhotoUploader({ person, onClose, onSuccess }) {
         year: year ? parseInt(year) : null,
       });
 
-      await photosAPI.upload(person.id, {
+      await client.post(`/persons/${person.id}/photos`, {
         cloudinary_url: cloudinaryUrl,
         caption: caption || '',
         year: year ? parseInt(year) : null,
