@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { photosAPI } from '../../api/client';
 
 export default function ProfilePanel({ person, families, relationships, persons, onClose }) {
   if (!person) return null;
 
   const [activeTab, setActiveTab] = useState('info');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [photos, setPhotos] = useState([]);
+  const [lightbox, setLightbox] = useState(null);
   const family = families.find((f) => f.id === person.family_id);
 
   // Detect window resize
@@ -15,6 +18,17 @@ export default function ProfilePanel({ person, families, relationships, persons,
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Load photos
+  useEffect(() => {
+    if (!person?.id) return;
+    photosAPI.list(person.id)
+      .then(res => {
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
+        setPhotos(data);
+      })
+      .catch(() => setPhotos([]));
+  }, [person?.id]);
 
   const calculateAge = (birthDate) => {
     if (!birthDate) return null;
@@ -91,6 +105,12 @@ export default function ProfilePanel({ person, families, relationships, persons,
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div>
             <div
+              onClick={() => {
+                if (person.avatar_url) {
+                  const avatarPhoto = photos.find(p => p.cloudinary_url === person.avatar_url);
+                  setLightbox(avatarPhoto || { cloudinary_url: person.avatar_url, caption: '', year: null });
+                }
+              }}
               style={{
                 width: '56px',
                 height: '56px',
@@ -103,9 +123,19 @@ export default function ProfilePanel({ person, families, relationships, persons,
                 fontSize: '20px',
                 fontWeight: 'bold',
                 marginBottom: '12px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                cursor: person.avatar_url ? 'pointer' : 'default',
+                transition: 'opacity 0.2s',
               }}
+              onMouseEnter={(e) => { if (person.avatar_url) e.currentTarget.style.opacity = '0.8'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             >
-              {person.first_name?.[0]}{person.last_name?.[0]}
+              {person.avatar_url
+                ? <img src={person.avatar_url} alt={person.first_name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <>{person.first_name?.[0]}{person.last_name?.[0]}</>
+              }
             </div>
             <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', margin: 0 }}>
               {person.first_name} {person.last_name}
@@ -195,6 +225,26 @@ export default function ProfilePanel({ person, families, relationships, persons,
                 <p style={{ color: '#fff', margin: '4px 0' }}>{person.current_location}</p>
               </div>
             )}
+            {photos.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <p style={{ fontSize: '10px', color: '#9ca3af', fontWeight: '600', margin: '0 0 10px 0' }}>
+                  📸 FOTOS ({photos.length})
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  {photos.map(photo => (
+                    <div key={photo.id}
+                      onClick={() => setLightbox(photo)}
+                      style={{
+                        aspectRatio: '1', borderRadius: '8px', overflow: 'hidden',
+                        cursor: 'pointer', background: '#374151',
+                      }}>
+                      <img src={photo.cloudinary_url} alt={photo.caption || ''}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Note: Edit and Add Photo buttons will be shown based on user role (Phase 3+) */}
           </div>
         )}
@@ -228,6 +278,24 @@ export default function ProfilePanel({ person, families, relationships, persons,
             ) : (
               <p style={{ color: '#9ca3af', textAlign: 'center', marginTop: '24px' }}>No hay relaciones registradas</p>
             )}
+          </div>
+        )}
+
+        {/* Lightbox */}
+        {lightbox && (
+          <div onClick={() => setLightbox(null)} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', zIndex: 9999, padding: '24px',
+          }}>
+            <img src={lightbox.cloudinary_url} alt={lightbox.caption || ''}
+              style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: '12px', objectFit: 'contain' }} />
+            {(lightbox.caption || lightbox.year) && (
+              <p style={{ color: '#9ca3af', marginTop: '12px', fontSize: '14px' }}>
+                {lightbox.caption}{lightbox.caption && lightbox.year ? ' · ' : ''}{lightbox.year}
+              </p>
+            )}
+            <p style={{ color: '#6b7280', fontSize: '12px', marginTop: '8px' }}>Toca para cerrar</p>
           </div>
         )}
       </div>
