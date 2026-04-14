@@ -3,12 +3,129 @@ import * as d3 from 'd3';
 
 const STAR_RADIUS = 20;
 
+// Calcular distancia BFS desde un nodo a todos los demás
+function getBFSLevels(startId, allLinks) {
+  const levels = { [startId]: 0 };
+  const queue = [startId];
+  while (queue.length) {
+    const cur = queue.shift();
+    allLinks.forEach(link => {
+      const srcId = link.source?.id || link.source;
+      const tgtId = link.target?.id || link.target;
+      if (srcId === cur && !(tgtId in levels)) {
+        levels[tgtId] = levels[cur] + 1;
+        queue.push(tgtId);
+      }
+      if (tgtId === cur && !(srcId in levels)) {
+        levels[srcId] = levels[cur] + 1;
+        queue.push(srcId);
+      }
+    });
+  }
+  return levels;
+}
+
+// Crear partículas desde un nodo hacia sus conexiones
+function spawnParticles(fromNode, allNodes, allLinks, familyColor) {
+  const levels = getBFSLevels(fromNode.id, allLinks);
+  const particles = [];
+
+  allLinks.forEach(link => {
+    const srcId = link.source?.id || link.source;
+    const tgtId = link.target?.id || link.target;
+    const isConnected = srcId === fromNode.id || tgtId === fromNode.id;
+    if (!isConnected) return;
+
+    const otherId = srcId === fromNode.id ? tgtId : srcId;
+    const level = levels[otherId] || 99;
+    if (level > 3) return;
+
+    const otherNode = allNodes.find(n => n.id === otherId);
+    if (!otherNode) return;
+
+    // Más partículas cuanto más cerca
+    const count = level === 1 ? 5 : level === 2 ? 3 : 1;
+    const speed = 0.004 + Math.random() * 0.002;
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        fromNode,
+        toNode: otherNode,
+        t: -(i / count) * 0.8,
+        speed,
+        level,
+        color: familyColor,
+        size: level === 1 ? 3 : level === 2 ? 2 : 1.5,
+        maxAlpha: level === 1 ? 0.9 : level === 2 ? 0.55 : 0.25,
+      });
+    }
+  });
+
+  return particles;
+}
+
+// Loop de animación de partículas
+function animateParticles(canvasEl, particlesRef, getCurrentTransform) {
+  if (!canvasEl) return;
+  const ctx = canvasEl.getContext('2d');
+
+  function frame() {
+    const rect = canvasEl.getBoundingClientRect();
+    canvasEl.width = rect.width;
+    canvasEl.height = rect.height;
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    const transform = getCurrentTransform();
+
+    particlesRef.current.forEach(p => {
+      p.t += p.speed;
+      if (p.t > 1.1) p.t = -Math.random() * 0.3;
+
+      const t = Math.max(0, Math.min(1, p.t));
+
+      const wx = p.fromNode.x + (p.toNode.x - p.fromNode.x) * t;
+      const wy = p.fromNode.y + (p.toNode.y - p.fromNode.y) * t;
+
+      const sx = transform.x + wx * transform.k;
+      const sy = transform.y + wy * transform.k;
+
+      const alpha = Math.sin(t * Math.PI) * p.maxAlpha;
+      if (alpha <= 0) return;
+
+      const hex = p.color.replace('#', '');
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, p.size * transform.k, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.fill();
+
+      if (p.level === 1) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size * transform.k * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 0.2})`;
+        ctx.fill();
+      }
+    });
+
+    return requestAnimationFrame(frame);
+  }
+
+  return frame();
+}
+
 export default function ConstellationCanvas({ persons, families, relationships, onSelectPerson, personToAnimate }) {
   const svgRef = useRef();
   const containerRef = useRef();
   const [dimensions, setDimensions] = useState({ width: 1400, height: 800 });
   const svgZoomRef = useRef(null);
   const nodesRef = useRef([]);
+  const particleCanvasRef = useRef(null);
+  const particleAnimRef = useRef(null);
+  const activeParticlesRef = useRef([]);
+  const currentTransformRef = useRef({ x: 0, y: 0, k: 1 });
 
   // Get container dimensions
   useEffect(() => {
@@ -114,6 +231,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     const g = svg.append('g');
     const zoom = d3.zoom().on('zoom', (event) => {
       g.attr('transform', event.transform);
+      currentTransformRef.current = event.transform;
     });
     svg.call(zoom);
     svgZoomRef.current = zoom;
@@ -122,6 +240,17 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     svg.on('click', function (event) {
       if (event.target === this) {
         onSelectPerson(null);
+        // Limpiar partículas
+        if (particleAnimRef.current) {
+          cancelAnimationFrame(particleAnimRef.current);
+          particleAnimRef.current = null;
+        }
+        activeParticlesRef.current = [];
+        if (particleCanvasRef.current) {
+          const ctx = particleCanvasRef.current.getContext('2d');
+          const r = particleCanvasRef.current.getBoundingClientRect();
+          ctx.clearRect(0, 0, r.width, r.height);
+        }
       }
     });
 
@@ -291,6 +420,28 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         if (person && onSelectPerson) {
           onSelectPerson(person);
         }
+
+        // Cancelar animación anterior
+        if (particleAnimRef.current) {
+          cancelAnimationFrame(particleAnimRef.current);
+          particleAnimRef.current = null;
+        }
+
+        // Obtener color de la familia del nodo seleccionado
+        const family = families?.find((f) => f.id === d.family_id);
+        const color = family ? `#${family.color_hex}` : '#a855f7';
+
+        // Crear partículas
+        activeParticlesRef.current = spawnParticles(d, nodes, links, color);
+
+        // Arrancar loop de animación
+        if (particleCanvasRef.current) {
+          particleAnimRef.current = animateParticles(
+            particleCanvasRef.current,
+            activeParticlesRef,
+            () => currentTransformRef.current
+          );
+        }
       });
 
     // ── AVATAR IMAGES (después de círculos, antes de labels) ──
@@ -396,15 +547,29 @@ export default function ConstellationCanvas({ persons, families, relationships, 
 
     return () => {
       simulation.stop();
+      if (particleAnimRef.current) {
+        cancelAnimationFrame(particleAnimRef.current);
+      }
+      activeParticlesRef.current = [];
     };
   }, [persons, families, relationships, dimensions]);
 
   return (
-    <div ref={containerRef} className="w-full h-full">
+    <div ref={containerRef} className="w-full h-full" style={{ position: 'relative' }}>
       <svg
         ref={svgRef}
         className="constellation-canvas w-full h-full"
         style={{ cursor: 'grab', display: 'block' }}
+      />
+      <canvas
+        ref={particleCanvasRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          width: '100%',
+          height: '100%',
+        }}
       />
     </div>
   );
