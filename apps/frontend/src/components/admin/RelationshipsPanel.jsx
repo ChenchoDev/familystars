@@ -195,6 +195,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
   };
 
   const handleAddChild = (rel) => {
+    console.log('REL:', JSON.stringify(rel));
     const parentA = persons.find(p => p.id === rel.person_a_id);
     const parentB = persons.find(p => p.id === rel.person_b_id);
 
