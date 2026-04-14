@@ -316,12 +316,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .attr('clip-path', (d) => `url(#clip-${d.id})`)
       .attr('preserveAspectRatio', 'xMidYMid slice')
       .style('cursor', 'pointer')
-      .style('pointer-events', 'all')
-      .on('click', (event, d) => {
-        event.stopPropagation();
-        const person = persons.find((p) => p.id === d.id);
-        if (person && onSelectPerson) onSelectPerson(person);
-      });
+      .style('pointer-events', 'none');
 
     // Draw name labels under stars
     const labels = g
