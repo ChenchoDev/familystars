@@ -4,6 +4,7 @@ import Landing from './pages/Landing';
 import Constellation from './pages/Constellation';
 import Admin from './pages/Admin';
 import Auth from './pages/Auth';
+import PasswordGate from './pages/PasswordGate';
 import { authAPI } from './api/client';
 import './styles/index.css';
 
@@ -53,7 +54,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/app" element={<Constellation />} />
+        <Route
+          path="/app"
+          element={
+            <PasswordGate>
+              <Constellation />
+            </PasswordGate>
+          }
+        />
         <Route path="/admin" element={<AdminRoute />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
