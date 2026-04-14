@@ -280,26 +280,42 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     const defs = g.append('defs');
 
     nodes.forEach((node) => {
-      defs.append('clipPath')
-        .attr('id', `clip-${node.id}`)
-        .append('circle')
-        .attr('r', STAR_RADIUS);
+      const person = persons.find((p) => p.id === node.id);
+      if (person?.avatar) {
+        defs.append('clipPath')
+          .attr('id', `clip-${node.id}`)
+          .append('circle')
+          .attr('r', STAR_RADIUS)
+          .attr('cx', 0)
+          .attr('cy', 0);
+      }
     });
 
     const images = g
       .selectAll('image.star-avatar')
-      .data(nodes.filter((d) => d.avatar))
+      .data(nodes.filter((d) => {
+        const person = persons.find((p) => p.id === d.id);
+        return person?.avatar;
+      }))
       .enter()
       .append('image')
       .attr('class', 'star-avatar')
-      .attr('href', (d) => d.avatar)
+      .attr('href', (d) => {
+        const person = persons.find((p) => p.id === d.id);
+        return person?.avatar || '';
+      })
       .attr('width', STAR_RADIUS * 2)
       .attr('height', STAR_RADIUS * 2)
       .attr('x', (d) => d.x - STAR_RADIUS)
       .attr('y', (d) => d.y - STAR_RADIUS)
       .attr('clip-path', (d) => `url(#clip-${d.id})`)
       .attr('preserveAspectRatio', 'xMidYMid slice')
-      .style('pointer-events', 'none');
+      .style('cursor', 'pointer')
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        const person = persons.find((p) => p.id === d.id);
+        if (person && onSelectPerson) onSelectPerson(person);
+      });
 
     // Draw name labels under stars
     const labels = g
@@ -335,6 +351,15 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       images
         .attr('x', (d) => d.x - STAR_RADIUS)
         .attr('y', (d) => d.y - STAR_RADIUS);
+
+      // Update clip paths positions
+      defs.selectAll('clipPath circle')
+        .data(nodes.filter((n) => {
+          const person = persons.find((p) => p.id === n.id);
+          return person?.avatar;
+        }), (d) => d.id)
+        .attr('cx', (d) => d.x)
+        .attr('cy', (d) => d.y);
 
       labels.attr('x', (d) => d.x).attr('y', (d) => d.y + STAR_RADIUS + 20);
 

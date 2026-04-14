@@ -508,10 +508,10 @@ export default function PersonsPanel({ onPendingCountChange }) {
                           <img
                             src={person.avatar_url}
                             alt="avatar"
-                            className="w-8 h-8 rounded-full object-cover"
+                            style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
                             👤
                           </div>
                         )}
