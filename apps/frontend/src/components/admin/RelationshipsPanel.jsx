@@ -407,9 +407,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                 relationships.map((rel) => (
                   <tr key={rel.id} className="hover:bg-gray-700 transition-colors">
                     <td className="px-6 py-4 text-white font-medium">
-                      {rel.person_a
-                        ? `${rel.person_a.first_name} ${rel.person_a.last_name}`
-                        : getPersonName(rel.person_a_id)}
+                      {rel.person_a?.name ?? getPersonName(rel.person_a_id)}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -421,9 +419,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-white font-medium">
-                      {rel.person_b
-                        ? `${rel.person_b.first_name} ${rel.person_b.last_name}`
-                        : getPersonName(rel.person_b_id)}
+                      {rel.person_b?.name ?? getPersonName(rel.person_b_id)}
                     </td>
                     <td className="px-6 py-4">
                       <span
