@@ -555,7 +555,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
 
       {/* Add Child Modal */}
       {addChildFor && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999}}>
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
             <h3 className="text-white text-lg font-bold mb-2">Añadir hijo</h3>
             <p className="text-gray-400 text-sm mb-4">
