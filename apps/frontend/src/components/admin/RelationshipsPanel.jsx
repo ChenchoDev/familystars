@@ -225,8 +225,8 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       const newPersonId = personRes.data?.id || personRes.data?.data?.id;
       if (!newPersonId) throw new Error('No se pudo obtener el ID de la persona creada');
 
-      const parentAId = addChildFor.rel.person_a_id;
-      const parentBId = addChildFor.rel.person_b_id;
+      const parentAId = addChildFor.rel.person_a?.id || addChildFor.rel.person_a_id;
+      const parentBId = addChildFor.rel.person_b?.id || addChildFor.rel.person_b_id;
 
       // 2. Crear relación padre A → hijo
       await relationshipsAPI.create({
