@@ -47,6 +47,6 @@ export const schemas = {
     person_a_id: Joi.string().uuid().required(),
     person_b_id: Joi.string().uuid().required(),
     type: Joi.string().valid('parent', 'child', 'partner', 'sibling', 'cousin', 'other').required(),
-    notes: Joi.string().optional(),
+    notes: Joi.string().optional().allow('').allow(null),
   }),
 };

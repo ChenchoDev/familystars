@@ -125,7 +125,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         person_a_id: formData.person_a_id,
         type: formData.type,
         person_b_id: formData.person_b_id,
-        notes: formData.notes || null,
+        notes: formData.notes || '',
         verified: true,
       };
       console.log('📤 Datos enviados (relación):', relationshipData);
