@@ -38,18 +38,14 @@ export default function Constellation() {
 
       // Check if we have valid data
       // Axios wraps response in data, backend also returns { data: [...] }, so double-wrapped
-      const persons = personsRes?.data?.data || [];
-      const families = familiesRes?.data?.data || familiesRes?.data || [];
-      const relationships = relationshipsRes?.data?.data || [];
+      const persons = Array.isArray(personsRes?.data) ? personsRes.data : personsRes?.data?.data || [];
+      const families = Array.isArray(familiesRes?.data) ? familiesRes.data : familiesRes?.data?.data || [];
+      const relationships = Array.isArray(relationshipsRes?.data) ? relationshipsRes.data : relationshipsRes?.data?.data || [];
 
-      if (persons.length > 0 && families.length > 0) {
-        setPersons(persons);
-        setFamilies(families);
-        setRelationships(relationships);
-      } else {
-        // Use mock data if API returns empty
-        throw new Error('No persons in database');
-      }
+      // Always use data from API (even if empty)
+      setPersons(persons);
+      setFamilies(families);
+      setRelationships(relationships);
     } catch (err) {
       console.log('Error loading from API, using mock data:', err.message);
       // Use mock data when API fails or is empty
