@@ -37,6 +37,7 @@ router.delete('/person_photos/:id', requireAuth, requireRole('admin'), photosCon
 router.get('/relationships', relationshipsController.listRelationships);
 router.post('/relationships', requireAuth, validate(schemas.relationship), relationshipsController.createRelationship);
 router.patch('/relationships/:id/approve', requireAuth, requireRole('admin'), relationshipsController.approveRelationship);
+router.patch('/relationships/:id', requireAuth, requireRole('admin'), validate(schemas.relationship), relationshipsController.updateRelationship);
 router.delete('/relationships/:id', requireAuth, requireRole('admin'), relationshipsController.deleteRelationship);
 
 // ===== FAMILIES ROUTES =====

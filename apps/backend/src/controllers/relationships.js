@@ -108,6 +108,28 @@ export const createRelationship = async (req, res) => {
   }
 };
 
+// PATCH /relationships/:id [ADMIN ONLY] - Update type and notes only
+export const updateRelationship = async (req, res) => {
+  const { id } = req.params;
+  const { type, notes } = req.validated;
+
+  try {
+    const result = await pool.query(
+      `UPDATE relationships SET type = $1, notes = $2 WHERE id = $3 RETURNING *`,
+      [type, notes, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Relationship not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating relationship:', error);
+    res.status(500).json({ error: 'Failed to update relationship' });
+  }
+};
+
 // PATCH /relationships/:id/approve [ADMIN ONLY]
 export const approveRelationship = async (req, res) => {
   const { id } = req.params;

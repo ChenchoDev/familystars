@@ -17,6 +17,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [toast, setToast] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [searchPersonA, setSearchPersonA] = useState('');
@@ -104,21 +105,34 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     return families.find((f) => f.id === person.family_id);
   };
 
+  const handleEdit = (rel) => {
+    setFormData({
+      person_a_id: rel.person_a_id,
+      type: rel.type,
+      person_b_id: rel.person_b_id,
+      notes: rel.notes || '',
+    });
+    setEditingId(rel.id);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Check if relationship already exists
-      const exists = relationships.some(
-        (r) =>
-          (r.person_a_id === formData.person_a_id &&
-            r.person_b_id === formData.person_b_id) ||
-          (r.person_a_id === formData.person_b_id &&
-            r.person_b_id === formData.person_a_id)
-      );
+      // Check if relationship already exists (only for new relationships)
+      if (!editingId) {
+        const exists = relationships.some(
+          (r) =>
+            (r.person_a_id === formData.person_a_id &&
+              r.person_b_id === formData.person_b_id) ||
+            (r.person_a_id === formData.person_b_id &&
+              r.person_b_id === formData.person_a_id)
+        );
 
-      if (exists) {
-        showToast('Ya existe una relación entre estas dos personas', 'error');
-        return;
+        if (exists) {
+          showToast('Ya existe una relación entre estas dos personas', 'error');
+          return;
+        }
       }
 
       const relationshipData = {
@@ -129,10 +143,17 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
         verified: true,
       };
       console.log('📤 Datos enviados (relación):', relationshipData);
-      await relationshipsAPI.create(relationshipData);
 
-      showToast('Relación creada correctamente');
+      if (editingId) {
+        await relationshipsAPI.update(editingId, relationshipData);
+        showToast('Relación actualizada correctamente');
+      } else {
+        await relationshipsAPI.create(relationshipData);
+        showToast('Relación creada correctamente');
+      }
+
       setFormData({ person_a_id: '', type: '', person_b_id: '', notes: '' });
+      setEditingId(null);
       setSearchPersonA('');
       setSearchPersonB('');
       setShowForm(false);
@@ -156,6 +177,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
 
   const handleCancel = () => {
     setFormData({ person_a_id: '', type: '', person_b_id: '', notes: '' });
+    setEditingId(null);
     setSearchPersonA('');
     setSearchPersonB('');
     setFilteredPersonsA([]);
@@ -202,10 +224,12 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       {/* Form */}
       {showForm && (
         <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
-          <h3 className="text-white text-lg font-bold">Nueva relación</h3>
+          <h3 className="text-white text-lg font-bold">
+            {editingId ? 'Editar relación' : 'Nueva relación'}
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Person A */}
-            <div>
+            {/* Person A — solo en modo crear */}
+            {!editingId && (<div>
               <label className="text-gray-300 text-sm font-medium block mb-1">
                 Persona A *
               </label>
@@ -255,6 +279,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                 </p>
               )}
             </div>
+            )}
 
             {/* Type */}
             <div>
@@ -274,8 +299,8 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
               </select>
             </div>
 
-            {/* Person B */}
-            <div>
+            {/* Person B — solo en modo crear */}
+            {!editingId && (<div>
               <label className="text-gray-300 text-sm font-medium block mb-1">
                 Persona B *
               </label>
@@ -325,6 +350,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                 </p>
               )}
             </div>
+            )}
 
             {/* Notes */}
             <div>
@@ -343,7 +369,7 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                 type="submit"
                 className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
-                Crear
+                {editingId ? 'Guardar cambios' : 'Crear'}
               </button>
               <button
                 type="button"
@@ -408,10 +434,16 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                         {rel.verified ? '✓' : '○'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 text-sm space-x-2">
+                      <button
+                        onClick={() => handleEdit(rel)}
+                        className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                      >
+                        Editar
+                      </button>
                       <button
                         onClick={() => setShowDeleteConfirm(rel.id)}
-                        className="text-red-400 hover:text-red-300 font-medium text-sm transition-colors"
+                        className="text-red-400 hover:text-red-300 font-medium transition-colors"
                       >
                         Eliminar
                       </button>

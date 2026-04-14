@@ -57,6 +57,7 @@ export const familiesAPI = {
 export const relationshipsAPI = {
   list: () => client.get('/relationships'),
   create: (data) => client.post('/relationships', data),
+  update: (id, data) => client.patch(`/relationships/${id}`, data),
   approve: (id) => client.patch(`/relationships/${id}/approve`),
   delete: (id) => client.delete(`/relationships/${id}`),
 };
