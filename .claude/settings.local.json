@@ -3,7 +3,9 @@
     "allow": [
       "Bash(curl -s http://localhost:3000/health)",
       "Bash(npm uninstall:*)",
-      "Bash(taskkill /F /IM node.exe)"
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(curl -s -X POST http://localhost:3003/auth/login -H \"Content-Type: application/json\" -d '{\"\"\"\"email\"\"\"\":\"\"\"\"admin@test.com\"\"\"\",\"\"\"\"password\"\"\"\":\"\"\"\"admin123\"\"\"\"}')",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
