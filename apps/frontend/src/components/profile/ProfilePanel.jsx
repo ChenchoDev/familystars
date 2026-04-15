@@ -43,6 +43,26 @@ export default function ProfilePanel({ person, families, relationships, persons,
   const age = calculateAge(person.birth_date);
   const birthYear = person.birth_date ? new Date(person.birth_date).getFullYear() : null;
 
+  const getRelationLabel = (rel, currentPersonId) => {
+    const aId = rel.person_a?.id || rel.person_a_id;
+    const isA = aId === currentPersonId;
+
+    switch(rel.type) {
+      case 'parent':
+        return isA ? '👨‍👩 Padre/Madre de' : '👶 Hijo/a de';
+      case 'child':
+        return isA ? '👶 Hijo/a de' : '👨‍👩 Padre/Madre de';
+      case 'partner':
+        return '💑 Pareja';
+      case 'sibling':
+        return '👯 Hermano/a';
+      case 'cousin':
+        return '👥 Primo/a';
+      default:
+        return rel.type;
+    }
+  };
+
   const relatedPersons = relationships
     .filter((rel) => {
       const aId = rel.person_a?.id || rel.person_a_id;
@@ -55,7 +75,7 @@ export default function ProfilePanel({ person, families, relationships, persons,
       const relatedId = aId === person.id ? bId : aId;
       return {
         person: persons.find((p) => p.id === relatedId),
-        type: rel.type,
+        relationship: rel,
       };
     })
     .filter((rel) => rel.person);
@@ -267,11 +287,7 @@ export default function ProfilePanel({ person, families, relationships, persons,
                     {rel.person?.first_name} {rel.person?.last_name}
                   </p>
                   <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0' }}>
-                    {rel.type === 'partner' ? '💑 Pareja' :
-                     rel.type === 'parent' ? '👨‍👩 Padre/Madre' :
-                     rel.type === 'child' ? '👶 Hijo/Hija' :
-                     rel.type === 'sibling' ? '👯 Hermano/Hermana' :
-                     rel.type === 'cousin' ? '👥 Primo/Prima' : rel.type}
+                    {getRelationLabel(rel.relationship, person.id)}
                   </p>
                 </div>
               ))
