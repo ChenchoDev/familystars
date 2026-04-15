@@ -1,3 +1,14 @@
+# FamilyStars — Rediseño RelationshipsPanel
+
+## Instrucción
+
+Reemplazar el archivo completo `apps/frontend/src/components/admin/RelationshipsPanel.jsx`
+con el siguiente código. Todo inline styles, sin Tailwind, coherente con
+el resto del dashboard rediseñado.
+
+---
+
+```jsx
 import { useEffect, useState } from 'react';
 import { relationshipsAPI, personsAPI, familiesAPI } from '../../api/client';
 
@@ -569,3 +580,4 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     </div>
   );
 }
+```
