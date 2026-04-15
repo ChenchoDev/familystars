@@ -730,6 +730,40 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
       });
     });
 
+    // ── PARTÍCULAS DORADAS ENTRE PAREJAS (siempre activas) ──
+    const partnerParticles = [];
+    links.filter(l => l.type === 'partner').forEach(link => {
+      const srcNode = nodes.find(n => n.id === (link.source?.id || link.source));
+      const tgtNode = nodes.find(n => n.id === (link.target?.id || link.target));
+      if (!srcNode || !tgtNode) return;
+      for (let i = 0; i < 3; i++) {
+        partnerParticles.push({
+          fromNode: srcNode, toNode: tgtNode,
+          t: i / 3, speed: 0.003 + Math.random() * 0.002,
+          color: '#f59e0b', size: 2, maxAlpha: 0.7, level: 0,
+          reverse: i % 2 === 0,  // algunas van en dirección contraria
+        });
+      }
+    });
+
+    // Arrancar loop de partículas de pareja (independiente del canvas de partículas)
+    if (partnerParticles.length > 0 && particleCanvasRef.current) {
+      // Añadir las partículas de pareja al array global
+      activeParticlesRef.current = [
+        ...activeParticlesRef.current,
+        ...partnerParticles,
+      ];
+
+      // Si no hay animación activa, arrancarla
+      if (!particleAnimRef.current && particleCanvasRef.current) {
+        particleAnimRef.current = animateParticles(
+          particleCanvasRef.current,
+          activeParticlesRef,
+          () => currentTransformRef.current
+        );
+      }
+    }
+
     // Drag handlers
     function dragStarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
