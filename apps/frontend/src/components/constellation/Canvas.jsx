@@ -789,7 +789,7 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
       }
       activeParticlesRef.current = [];
     };
-  }, [persons, families, relationships, dimensions, familyFilter]);
+  }, [persons, families, relationships, dimensions]);
 
   // MEJORA 5: Efecto del filtro de familia
   useEffect(() => {
