@@ -347,7 +347,7 @@ export default function Landing() {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.boxShadow = '0 16px 48px rgba(168,85,247,0.6)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(168,85,247,0.4)'; }}
               >
-                ✉️ Escribirme a chenchomarin@gmail.com
+                ✉️ Contactar con el administrador
               </a>
               <p style={{ color: '#475569', fontSize: '12px' }}>
                 Respondo a todos los mensajes personalmente
