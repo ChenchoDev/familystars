@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ConstellationCanvas from '../components/constellation/Canvas';
 import SearchBar from '../components/search/SearchBar';
 import ProfilePanel from '../components/profile/ProfilePanel';
@@ -14,6 +14,8 @@ export default function Constellation() {
   const [error, setError] = useState(null);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [personToAnimate, setPersonToAnimate] = useState(null);
+  const [familyFilter, setFamilyFilter] = useState(null); // MEJORA 5: estado del filtro
+  const canvasRef = useRef(null); // MEJORA 6: ref para exportar imagen
 
   useEffect(() => {
     loadData();
@@ -182,6 +184,58 @@ export default function Constellation() {
           <div style={{ flex: '1 1 280px', minWidth: '280px', maxWidth: '420px' }}>
             <SearchBar persons={persons} families={families} onSelectPerson={handleSelectPersonFromSearch} />
           </div>
+
+          {/* MEJORA 5: Filtro de familia */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setFamilyFilter(null)}
+              style={{
+                padding: '6px 14px', borderRadius: '20px', border: 'none',
+                cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                background: familyFilter === null
+                  ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.07)',
+                color: familyFilter === null ? '#e9d5ff' : '#9ca3af',
+                transition: 'all 0.2s',
+              }}
+            >
+              Todas
+            </button>
+            {families.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFamilyFilter(familyFilter === f.id ? null : f.id)}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', border: 'none',
+                  cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                  background: familyFilter === f.id
+                    ? `rgba(${parseInt(f.color_hex.slice(0,2),16)},${parseInt(f.color_hex.slice(2,4),16)},${parseInt(f.color_hex.slice(4,6),16)},0.35)`
+                    : 'rgba(255,255,255,0.07)',
+                  color: familyFilter === f.id ? '#fff' : '#9ca3af',
+                  borderLeft: familyFilter === f.id ? `3px solid #${f.color_hex}` : '3px solid transparent',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {f.display_name || f.name}
+              </button>
+            ))}
+          </div>
+
+          {/* MEJORA 6: Botón de exportar */}
+          <button
+            onClick={() => canvasRef.current?.exportAsImage()}
+            title="Descargar constelación como imagen"
+            style={{
+              padding: '8px 12px', borderRadius: '12px',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
+          >
+            📸
+          </button>
         </div>
       </div>
 
@@ -195,11 +249,13 @@ export default function Constellation() {
       {/* Canvas */}
       <div className="flex-1 overflow-hidden">
         <ConstellationCanvas
+          ref={canvasRef}
           persons={persons}
           families={families}
           relationships={relationships}
           onSelectPerson={setSelectedPerson}
           personToAnimate={personToAnimate}
+          familyFilter={familyFilter}
         />
       </div>
 

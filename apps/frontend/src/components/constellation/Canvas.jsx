@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import * as d3 from 'd3';
 
 const STAR_RADIUS = 20;
@@ -23,6 +23,52 @@ function getBFSLevels(startId, allLinks) {
     });
   }
   return levels;
+}
+
+// Calcular la generación de cada persona (0 = la más antigua encontrada)
+function getGenerationMap(allPersons, allRelationships) {
+  const genMap = {};
+
+  // Encontrar raíces (personas sin padres conocidos)
+  const hasParent = new Set();
+  allRelationships.forEach(rel => {
+    const aId = rel.person_a?.id || rel.person_a_id;
+    const bId = rel.person_b?.id || rel.person_b_id;
+    if (rel.type === 'parent') hasParent.add(bId);
+    if (rel.type === 'child') hasParent.add(aId);
+  });
+
+  const roots = allPersons.filter(p => !hasParent.has(p.id));
+  roots.forEach(r => { genMap[r.id] = 0; });
+
+  // BFS desde las raíces
+  const queue = [...roots.map(r => r.id)];
+  let iterations = 0;
+  while (queue.length && iterations < 1000) {
+    iterations++;
+    const cur = queue.shift();
+    const curGen = genMap[cur] ?? 0;
+    allRelationships.forEach(rel => {
+      const aId = rel.person_a?.id || rel.person_a_id;
+      const bId = rel.person_b?.id || rel.person_b_id;
+      if (rel.type === 'parent' && aId === cur && !(bId in genMap)) {
+        genMap[bId] = curGen + 1;
+        queue.push(bId);
+      }
+    });
+  }
+  return genMap;
+}
+
+// Radio de estrella según generación (mayores = más grandes)
+function getStarRadius(person, allPersons, allRelationships) {
+  if (!person) return 20;
+  const genMap = getGenerationMap(allPersons, allRelationships);
+  const gen = genMap[person.id] ?? 2;
+  const maxGen = Math.max(...Object.values(genMap), 1);
+  // Radio entre 14 (más joven) y 28 (más mayor)
+  const ratio = 1 - (gen / (maxGen + 1));
+  return Math.round(14 + ratio * 14);
 }
 
 // Crear partículas desde un nodo hacia sus conexiones
@@ -116,7 +162,11 @@ function animateParticles(canvasEl, particlesRef, getCurrentTransform) {
   return frame();
 }
 
-export default function ConstellationCanvas({ persons, families, relationships, onSelectPerson, personToAnimate }) {
+// MEJORA 6: Cambiar export default function por forwardRef
+const ConstellationCanvas = forwardRef(function ConstellationCanvas(
+  { persons, families, relationships, onSelectPerson, personToAnimate, familyFilter },
+  ref
+) {
   const svgRef = useRef();
   const containerRef = useRef();
   const [dimensions, setDimensions] = useState({ width: 1400, height: 800 });
@@ -143,7 +193,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Animate to selected person
+  // MEJORA 7: Animate to selected person with improved camera flight
   useEffect(() => {
     if (!personToAnimate || !svgZoomRef.current || !svgRef.current) return;
 
@@ -152,25 +202,44 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     if (!targetNode || targetNode.x === undefined || targetNode.y === undefined) return;
 
     const svg = d3.select(svgRef.current);
-    const x = targetNode.x;
-    const y = targetNode.y;
 
-    // Calculate zoom level (1.8x to focus nicely on the star)
-    const k = 1.8;
+    // Fase 1: zoom out rápido (efecto de perspectiva)
+    const currentTransform = currentTransformRef.current;
+    const zoomOut = d3.zoomIdentity
+      .translate(currentTransform.x, currentTransform.y)
+      .scale(Math.max(0.4, currentTransform.k * 0.6));
 
-    // Create new transform to center on node
-    const newTransform = d3.zoomIdentity
-      .translate(dimensions.width / 2, dimensions.height / 2)
-      .scale(k)
-      .translate(-x, -y);
+    svg.transition()
+      .duration(300)
+      .ease(d3.easeQuadIn)
+      .call(svgZoomRef.current.transform, zoomOut)
+      .on('end', () => {
+        // Fase 2: volar hasta la estrella con zoom 2.2x
+        const k = 2.2;
+        const newTransform = d3.zoomIdentity
+          .translate(dimensions.width / 2, dimensions.height / 2)
+          .scale(k)
+          .translate(-targetNode.x, -targetNode.y);
 
-    // Animate the transition
-    svg
-      .transition()
-      .duration(800) // 800ms smooth animation
-      .ease(d3.easeCubicInOut)
-      .call(svgZoomRef.current.transform, newTransform);
-  }, [personToAnimate, dimensions]);
+        svg.transition()
+          .duration(900)
+          .ease(d3.easeCubicInOut)
+          .call(svgZoomRef.current.transform, newTransform)
+          .on('end', () => {
+            // Fase 3: pulso de la estrella al llegar
+            const person = persons.find(p => p.id === personToAnimate.id);
+            const baseR = getStarRadius(person, persons, relationships);
+            svg.selectAll('circle.star-node')
+              .filter(d => d.id === personToAnimate.id)
+              .transition().duration(200)
+              .attr('r', baseR * 2.2)
+              .attr('filter', 'drop-shadow(0 0 16px rgba(255,255,255,1))')
+              .transition().duration(400)
+              .attr('r', baseR)
+              .attr('filter', 'drop-shadow(0 0 3px rgba(255,255,255,0.5))');
+          });
+      });
+  }, [personToAnimate, dimensions, persons, relationships]);
 
   useEffect(() => {
     if (!svgRef.current || !persons?.length) return;
@@ -184,6 +253,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       name: `${person.first_name} ${person.last_name}`,
       family_id: person.family_id,
       avatar: person.avatar_url,
+      is_deceased: !!person.death_date || !!person.is_deceased,  // MEJORA 3: campo de fallecido
     }));
 
     const links = relationships
@@ -254,20 +324,34 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       }
     });
 
-    // Draw links with family colors
+    // MEJORA 4: Links normales (no pareja)
     const link = g
-      .selectAll('line')
-      .data(links)
+      .selectAll('line.normal-link')
+      .data(links.filter(l => l.type !== 'partner'))
       .enter()
       .append('line')
+      .attr('class', 'normal-link')
       .attr('stroke', (d) => {
-        const sourcePerson = persons.find((p) => p.id === d.source.id);
+        const sourcePerson = persons.find((p) => p.id === (d.source?.id || d.source));
         const family = families?.find((f) => f.id === sourcePerson?.family_id);
         return family ? `#${family.color_hex}` : '#666';
       })
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.3)
-      .attr('stroke-dasharray', (d) => (d.type === 'partner' ? '5,5' : 'none'));
+      .attr('stroke-width', 1.5)
+      .attr('opacity', 0.25)
+      .attr('stroke-dasharray', 'none');
+
+    // MEJORA 4: Links de pareja — dorados y especiales
+    const partnerLinks = g
+      .selectAll('line.partner-link')
+      .data(links.filter(l => l.type === 'partner'))
+      .enter()
+      .append('line')
+      .attr('class', 'partner-link')
+      .attr('stroke', '#f59e0b')           // dorado
+      .attr('stroke-width', 2.5)
+      .attr('opacity', 0.6)
+      .attr('stroke-dasharray', 'none')
+      .attr('filter', 'drop-shadow(0 0 3px rgba(245,158,11,0.5))');
 
     // ── CLIP PATHS para avatares (en svg raíz, no en g) ──
     const defs = svg.select('defs').empty()
@@ -277,10 +361,11 @@ export default function ConstellationCanvas({ persons, families, relationships, 
     nodes.forEach((n) => {
       const person = persons.find((p) => p.id === n.id);
       if (person?.avatar_url) {
+        const r = getStarRadius(person, persons, relationships);
         defs.append('clipPath')
           .attr('id', `clip-${n.id}`)
           .append('circle')
-          .attr('r', STAR_RADIUS)
+          .attr('r', r)
           .attr('cx', n.x || 0)
           .attr('cy', n.y || 0);
       }
@@ -324,7 +409,10 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .enter()
       .append('circle')
       .attr('class', 'star-halo')
-      .attr('r', STAR_RADIUS * 1.12)
+      .attr('r', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return getStarRadius(person, persons, relationships) * 1.12;
+      })
       .attr('cx', (d) => d.x)
       .attr('cy', (d) => d.y)
       .attr('fill', 'none')
@@ -343,7 +431,10 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .enter()
       .append('circle')
       .attr('class', 'star-glow')
-      .attr('r', STAR_RADIUS * 1.5)
+      .attr('r', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return getStarRadius(person, persons, relationships) * 1.5;
+      })
       .attr('cx', (d) => d.x)
       .attr('cy', (d) => d.y)
       .attr('fill', (d) => {
@@ -354,6 +445,41 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .attr('filter', 'blur(4px)')
       .attr('pointer-events', 'none');
 
+    // ── MEJORA 3: HALO ESPECIAL PARA FALLECIDOS ──
+    const deceasedNodes = nodes.filter(n => n.is_deceased);
+
+    // Halo azul exterior pulsante
+    const deceasedHalos = g
+      .selectAll('.deceased-halo')
+      .data(deceasedNodes, d => d.id)
+      .enter()
+      .append('circle')
+      .attr('class', 'deceased-halo')
+      .attr('r', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return getStarRadius(person, persons, relationships) * 1.8;
+      })
+      .attr('cx', d => d.x || 0)
+      .attr('cy', d => d.y || 0)
+      .attr('fill', 'none')
+      .attr('stroke', '#93c5fd')           // azul claro
+      .attr('stroke-width', 1.5)
+      .attr('opacity', 0.35)
+      .attr('stroke-dasharray', '3,4')     // línea punteada
+      .attr('pointer-events', 'none');
+
+    // Animación de rotación del halo punteado
+    function animateDeceasedHalos() {
+      let angle = 0;
+      function rotate() {
+        angle += 0.3;
+        deceasedHalos.attr('transform', d => `rotate(${angle}, ${d.x}, ${d.y})`);
+        requestAnimationFrame(rotate);
+      }
+      rotate();
+    }
+    if (deceasedNodes.length > 0) animateDeceasedHalos();
+
     // Then draw the actual stars
     const node = g
       .selectAll('circle.star-node')
@@ -361,13 +487,17 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .enter()
       .append('circle')
       .attr('class', 'star-node')
-      .attr('r', STAR_RADIUS)
+      .attr('r', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return getStarRadius(person, persons, relationships);
+      })
       .attr('fill', (d) => {
+        if (d.is_deceased) return '#64748b';  // MEJORA 3: gris azulado para fallecidos
         const family = families?.find((f) => f.id === d.family_id);
         return family ? `#${family.color_hex}` : '#9B59B6';
       })
-      .attr('opacity', 1)
-      .attr('filter', 'drop-shadow(0 0 3px rgba(255,255,255,0.5))')
+      .attr('opacity', (d) => d.is_deceased ? 0.7 : 1)  // MEJORA 3
+      .attr('filter', (d) => d.is_deceased ? 'drop-shadow(0 0 4px rgba(147,197,253,0.4))' : 'drop-shadow(0 0 3px rgba(255,255,255,0.5))')
       .style('cursor', 'pointer')
       .call(
         d3
@@ -378,21 +508,24 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       )
       .on('mouseenter', function (event, d) {
         const sel = d3.select(this);
+        const baseR = getStarRadius(persons.find(p => p.id === d.id), persons, relationships);
         sel.transition().duration(200)
-          .attr('r', STAR_RADIUS * 1.5)
+          .attr('r', baseR * 1.5)
           .attr('opacity', 1)
           .attr('filter', 'drop-shadow(0 0 8px rgba(255,255,255,0.9))');
         // Highlight the glow
         g.selectAll('.star-glow').filter((node) => node.id === d.id)
           .transition().duration(200)
           .attr('opacity', 0.4)
-          .attr('r', STAR_RADIUS * 2.5);
+          .attr('r', baseR * 2.5);
 
         // Find related persons
         const relatedIds = new Set([d.id]);
         links.forEach((link) => {
-          if (link.source.id === d.id) relatedIds.add(link.target.id);
-          if (link.target.id === d.id) relatedIds.add(link.source.id);
+          const srcId = link.source?.id || link.source;
+          const tgtId = link.target?.id || link.target;
+          if (srcId === d.id) relatedIds.add(tgtId);
+          if (tgtId === d.id) relatedIds.add(srcId);
         });
 
         // Dim unrelated stars
@@ -401,18 +534,19 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       })
       .on('mouseleave', function (event, d) {
         const sel = d3.select(this);
+        const baseR = getStarRadius(persons.find(p => p.id === d.id), persons, relationships);
         sel.transition().duration(200)
-          .attr('r', STAR_RADIUS)
-          .attr('opacity', 1)
-          .attr('filter', 'drop-shadow(0 0 3px rgba(255,255,255,0.5))');
+          .attr('r', baseR)
+          .attr('opacity', d.is_deceased ? 0.7 : 1)
+          .attr('filter', d.is_deceased ? 'drop-shadow(0 0 4px rgba(147,197,253,0.4))' : 'drop-shadow(0 0 3px rgba(255,255,255,0.5))');
         // Reset glow
         g.selectAll('.star-glow').filter((node) => node.id === d.id)
           .transition().duration(200)
           .attr('opacity', 0.15)
-          .attr('r', STAR_RADIUS * 1.5);
+          .attr('r', baseR * 1.5);
 
         // Restore all stars opacity
-        node.transition().duration(200).attr('opacity', 1);
+        node.transition().duration(200).attr('opacity', (n) => n.is_deceased ? 0.7 : 1);
       })
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -476,10 +610,24 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         const person = persons.find((p) => p.id === d.id);
         return person?.avatar_url || '';
       })
-      .attr('width', STAR_RADIUS * 2)
-      .attr('height', STAR_RADIUS * 2)
-      .attr('x', (d) => (d.x || 0) - STAR_RADIUS)
-      .attr('y', (d) => (d.y || 0) - STAR_RADIUS)
+      .attr('width', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        const r = getStarRadius(person, persons, relationships);
+        return r * 2;
+      })
+      .attr('height', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        const r = getStarRadius(person, persons, relationships);
+        return r * 2;
+      })
+      .attr('x', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return (d.x || 0) - getStarRadius(person, persons, relationships);
+      })
+      .attr('y', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return (d.y || 0) - getStarRadius(person, persons, relationships);
+      })
       .attr('clip-path', (d) => `url(#clip-${d.id})`)
       .attr('preserveAspectRatio', 'xMidYMid slice')
       .style('cursor', 'pointer')
@@ -493,7 +641,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .append('text')
       .attr('class', 'star-label')
       .attr('x', (d) => d.x)
-      .attr('y', (d) => d.y + STAR_RADIUS + 20)
+      .attr('y', (d) => d.y + 40)
       .attr('text-anchor', 'middle')
       .attr('font-size', '12px')
       .attr('font-weight', '500')
@@ -502,13 +650,43 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       .attr('pointer-events', 'none')
       .text((d) => d.name);
 
+    // ── MEJORA 1: Animación de entrada escalonada ──
+    node.attr('opacity', 0)
+      .attr('r', 0)
+      .transition()
+      .delay((d, i) => i * 40)
+      .duration(600)
+      .ease(d3.easeCubicOut)
+      .attr('opacity', (d) => d.is_deceased ? 0.7 : 1)
+      .attr('r', (d) => {
+        const person = persons.find(p => p.id === d.id);
+        return getStarRadius(person, persons, relationships);
+      });
+
+    // Animación de entrada de halos
+    halos.attr('opacity', 0)
+      .transition()
+      .delay((d, i) => i * 40 + 300)
+      .duration(400)
+      .attr('opacity', 0.4);
+
+    // Animación de entrada de labels
+    labels.attr('opacity', 0)
+      .transition()
+      .delay((d, i) => i * 40 + 500)
+      .duration(400)
+      .attr('opacity', 0.8);
+
     // Update positions on simulation tick
     simulation.on('tick', () => {
+      // MEJORA 4: Actualizar ambos tipos de links
       link
-        .attr('x1', (d) => d.source.x)
-        .attr('y1', (d) => d.source.y)
-        .attr('x2', (d) => d.target.x)
-        .attr('y2', (d) => d.target.y);
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+
+      partnerLinks
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
 
       node.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
 
@@ -516,9 +694,18 @@ export default function ConstellationCanvas({ persons, families, relationships, 
 
       halos.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
 
+      // MEJORA 3: Mover halos de fallecidos
+      deceasedHalos.attr('cx', d => d.x).attr('cy', d => d.y);
+
       images
-        .attr('x', (d) => d.x - STAR_RADIUS)
-        .attr('y', (d) => d.y - STAR_RADIUS);
+        .attr('x', (d) => {
+          const person = persons.find(p => p.id === d.id);
+          return d.x - getStarRadius(person, persons, relationships);
+        })
+        .attr('y', (d) => {
+          const person = persons.find(p => p.id === d.id);
+          return d.y - getStarRadius(person, persons, relationships);
+        });
 
       // Actualizar posición de clipPaths
       nodes.forEach((n) => {
@@ -530,7 +717,7 @@ export default function ConstellationCanvas({ persons, families, relationships, 
         }
       });
 
-      labels.attr('x', (d) => d.x).attr('y', (d) => d.y + STAR_RADIUS + 20);
+      labels.attr('x', (d) => d.x).attr('y', (d) => d.y + getStarRadius(persons.find(p => p.id === d.id), persons, relationships) + 20);
 
       // Update constellation labels positions dynamically
       constellationLabels.each(function (family) {
@@ -568,7 +755,72 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       }
       activeParticlesRef.current = [];
     };
-  }, [persons, families, relationships, dimensions]);
+  }, [persons, families, relationships, dimensions, familyFilter]);
+
+  // MEJORA 5: Efecto del filtro de familia
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    if (familyFilter === null) {
+      // Restaurar todo
+      svg.selectAll('circle.star-node').transition().duration(400).attr('opacity', d => d.is_deceased ? 0.7 : 1);
+      svg.selectAll('.star-label').transition().duration(400).attr('opacity', 0.8);
+      svg.selectAll('.star-halo').transition().duration(400).attr('opacity', 0.4);
+      svg.selectAll('.star-glow').transition().duration(400).attr('opacity', 0.15);
+      svg.selectAll('line').transition().duration(400).attr('opacity', d => {
+        if (d.type === 'partner') return 0.6;
+        return 0.25;
+      });
+      svg.selectAll('.constellation-label').transition().duration(400)
+        .attr('opacity', window.innerWidth < 640 ? 0.25 : 0.12);
+    } else {
+      // Atenuar lo que no es de la familia seleccionada
+      svg.selectAll('circle.star-node').transition().duration(400)
+        .attr('opacity', d => d.family_id === familyFilter ? (d.is_deceased ? 0.7 : 1) : 0.06);
+      svg.selectAll('.star-label').transition().duration(400)
+        .attr('opacity', d => d.family_id === familyFilter ? 0.9 : 0.05);
+      svg.selectAll('.star-halo').transition().duration(400)
+        .attr('opacity', d => d.family_id === familyFilter ? 0.6 : 0.03);
+      svg.selectAll('.star-glow').transition().duration(400)
+        .attr('opacity', d => d.family_id === familyFilter ? 0.3 : 0.02);
+      svg.selectAll('.constellation-label').transition().duration(400)
+        .attr('opacity', d => d.id === familyFilter ? 0.35 : 0.02);
+    }
+  }, [familyFilter]);
+
+  // MEJORA 6: Exponer método exportAsImage via useImperativeHandle
+  useImperativeHandle(ref, () => ({
+    exportAsImage: () => {
+      const svg = svgRef.current;
+      if (!svg) return;
+
+      const serializer = new XMLSerializer();
+      const svgStr = serializer.serializeToString(svg);
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      // Convertir SVG a PNG via canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = svg.clientWidth * 2;   // x2 para alta resolución
+        canvas.height = svg.clientHeight * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#080C18';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        const link = document.createElement('a');
+        link.download = 'FamilyStars_Constelacion.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+      };
+      img.src = url;
+    }
+  }));
 
   return (
     <div ref={containerRef} className="w-full h-full" style={{ position: 'relative' }}>
@@ -589,4 +841,6 @@ export default function ConstellationCanvas({ persons, families, relationships, 
       />
     </div>
   );
-}
+});
+
+export default ConstellationCanvas;
