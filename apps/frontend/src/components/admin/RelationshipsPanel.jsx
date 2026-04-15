@@ -35,8 +35,23 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     first_name: '',
     last_name: '',
     birth_date: '',
+    death_date: '',
+    is_deceased: false,
+    birth_place: '',
+    current_location: '',
+    bio: '',
     family_id: '',
+    instagram: '',
+    facebook: '',
+    linkedin: '',
   });
+
+  const inputStyle = {
+    width: '100%', padding: '8px 12px',
+    background: '#1f2937', border: '1px solid #374151',
+    borderRadius: '8px', color: '#fff', fontSize: '13px',
+    boxSizing: 'border-box', outline: 'none',
+  };
 
   useEffect(() => {
     fetchData();
@@ -191,7 +206,11 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     setFilteredPersonsB([]);
     setShowForm(false);
     setAddChildFor(null);
-    setChildForm({ first_name: '', last_name: '', birth_date: '', family_id: '' });
+    setChildForm({
+      first_name: '', last_name: '', birth_date: '', death_date: '',
+      is_deceased: false, birth_place: '', current_location: '',
+      bio: '', family_id: '', instagram: '', facebook: '', linkedin: '',
+    });
   };
 
   const handleAddChild = (rel) => {
@@ -199,10 +218,9 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
     setAddChildFor({ rel, parentA: rel.person_a, parentB: rel.person_b });
     console.log('addChildFor seteado');
     setChildForm({
-      first_name: '',
-      last_name: '',
-      birth_date: '',
-      family_id: '',
+      first_name: '', last_name: '', birth_date: '', death_date: '',
+      is_deceased: false, birth_place: '', current_location: '',
+      bio: '', family_id: '', instagram: '', facebook: '', linkedin: '',
     });
   };
 
@@ -214,11 +232,12 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       const personRes = await personsAPI.create({
         first_name: childForm.first_name,
         last_name: childForm.last_name,
-        birth_date: childForm.birth_date || '',
+        birth_date: childForm.birth_date || null,
+        death_date: childForm.is_deceased ? childForm.death_date || null : null,
+        birth_place: childForm.birth_place || '',
+        current_location: childForm.current_location || '',
+        bio: childForm.bio || '',
         family_id: childForm.family_id,
-        birth_place: '',
-        current_location: '',
-        bio: '',
         status: 'approved',
       });
 
@@ -271,7 +290,11 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
       const totalRelations = 2 + siblings.length; // 2 parents + N siblings
       showToast(`${childForm.first_name} creado/a con ${totalRelations} relaciones`);
       setAddChildFor(null);
-      setChildForm({ first_name: '', last_name: '', birth_date: '', family_id: '' });
+      setChildForm({
+        first_name: '', last_name: '', birth_date: '', death_date: '',
+        is_deceased: false, birth_place: '', current_location: '',
+        bio: '', family_id: '', instagram: '', facebook: '', linkedin: '',
+      });
       fetchData();
     } catch (err) {
       showToast(err.message || 'Error al crear', 'error');
@@ -622,6 +645,82 @@ export default function RelationshipsPanel({ onPendingCountChange }) {
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Fallecido */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input type="checkbox" id="deceased"
+                  checked={childForm.is_deceased}
+                  onChange={e => setChildForm({ ...childForm, is_deceased: e.target.checked, death_date: '' })}
+                  style={{ width: '16px', height: '16px' }} />
+                <label htmlFor="deceased" style={{ color: '#9ca3af', fontSize: '13px', cursor: 'pointer' }}>
+                  Fallecido
+                </label>
+              </div>
+
+              {childForm.is_deceased && (
+                <div>
+                  <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                    Fecha de fallecimiento
+                  </label>
+                  <input type="date" value={childForm.death_date}
+                    onChange={e => setChildForm({ ...childForm, death_date: e.target.value })}
+                    style={inputStyle} />
+                </div>
+              )}
+
+              {/* Lugares */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                    Lugar de nacimiento
+                  </label>
+                  <input type="text" value={childForm.birth_place}
+                    onChange={e => setChildForm({ ...childForm, birth_place: e.target.value })}
+                    placeholder="Murcia..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                    Lugar actual
+                  </label>
+                  <input type="text" value={childForm.current_location}
+                    onChange={e => setChildForm({ ...childForm, current_location: e.target.value })}
+                    placeholder="Madrid..." style={inputStyle} />
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                  Biografía (opcional)
+                </label>
+                <textarea value={childForm.bio}
+                  onChange={e => setChildForm({ ...childForm, bio: e.target.value })}
+                  maxLength={500} rows={3}
+                  placeholder="Algo sobre esta persona..."
+                  style={{ ...inputStyle, resize: 'vertical' }} />
+                <p style={{ color: '#6b7280', fontSize: '11px', marginTop: '2px' }}>
+                  {childForm.bio.length}/500
+                </p>
+              </div>
+
+              {/* Redes sociales */}
+              <div>
+                <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                  Redes sociales (opcional)
+                </label>
+                {[
+                  { key: 'instagram', placeholder: 'https://instagram.com/...' },
+                  { key: 'facebook',  placeholder: 'https://facebook.com/...' },
+                  { key: 'linkedin',  placeholder: 'https://linkedin.com/in/...' },
+                ].map(({ key, placeholder }) => (
+                  <div key={key} style={{ marginBottom: '6px' }}>
+                    <input type="url" value={childForm[key]}
+                      onChange={e => setChildForm({ ...childForm, [key]: e.target.value })}
+                      placeholder={placeholder}
+                      style={{ ...inputStyle, fontSize: '12px' }} />
+                  </div>
+                ))}
               </div>
             </div>
 
