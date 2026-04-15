@@ -1,3 +1,13 @@
+# FamilyStars — Nueva Landing Page
+
+## Instrucción
+
+Reemplazar el archivo completo `apps/frontend/src/pages/Landing.jsx`
+con el siguiente código.
+
+---
+
+```jsx
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 
@@ -419,3 +429,4 @@ export default function Landing() {
     </div>
   );
 }
+```
