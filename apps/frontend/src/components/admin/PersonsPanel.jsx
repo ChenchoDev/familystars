@@ -88,7 +88,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
         status: 'approved',
         // Convertir strings vacíos a null para las fechas
         birth_date: formData.birth_date || null,
-        death_date: formData.death_date || null,
+        death_date: formData.is_deceased ? formData.death_date || null : null,
       };
 
       if (editingId) {
@@ -129,7 +129,7 @@ export default function PersonsPanel({ onPendingCountChange }) {
       last_name: person.last_name,
       family_id: person.family_id?.toString() || '',
       birth_date: person.birth_date?.split('T')[0] || '',
-      death_date: person.death_date?.split('T')[0] || '',
+      death_date: person.death_date ? person.death_date.split('T')[0] : '',
       birth_place: person.birth_place || '',
       current_location: person.current_location || '',
       bio: person.bio || '',
@@ -315,37 +315,28 @@ export default function PersonsPanel({ onPendingCountChange }) {
                     onBlur={(e) => (e.target.style.boxShadow = 'none')}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <label style={{ color: '#d1d5db', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={formData.is_deceased}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_deceased: e.target.checked,
-                          death_date: e.target.checked ? formData.death_date : '',
-                        })
-                      }
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                    Fallecido
-                  </label>
-                </div>
               </div>
 
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.is_deceased}
+                  onChange={e => setFormData({ ...formData, is_deceased: e.target.checked, death_date: '' })}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <span style={{ color: '#9ca3af', fontSize: '13px' }}>Fallecido</span>
+              </label>
+
               {formData.is_deceased && (
-                <div style={{ marginTop: '16px' }}>
-                  <label style={{ color: '#d1d5db', fontSize: '14px', fontWeight: '500', display: 'block', marginBottom: '4px' }}>
+                <div>
+                  <label style={{ color: '#9ca3af', fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                     Fecha de fallecimiento
                   </label>
                   <input
                     type="date"
-                    value={formData.death_date}
-                    onChange={(e) => setFormData({ ...formData, death_date: e.target.value })}
-                    style={{ width: '100%', padding: '10px 12px', background: '#111827', border: '1px solid #374151', color: '#ffffff', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
-                    onFocus={(e) => (e.target.style.boxShadow = '0 0 0 2px rgba(168,85,247,0.3)')}
-                    onBlur={(e) => (e.target.style.boxShadow = 'none')}
+                    value={formData.death_date || ''}
+                    onChange={e => setFormData({ ...formData, death_date: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', background: '#111827', border: '1px solid #374151', borderRadius: '8px', color: '#fff', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }}
                   />
                 </div>
               )}

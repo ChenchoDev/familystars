@@ -6,8 +6,9 @@ export const listPersons = async (req, res) => {
   const { family_id, limit = 100, offset = 0 } = req.query;
 
   try {
-    let query = `SELECT id, first_name, last_name, birth_date, birth_place,
-                        current_location, bio, avatar_url, family_id, status
+    let query = `SELECT id, first_name, last_name, birth_date, death_date,
+                        birth_place, current_location, bio, avatar_url,
+                        family_id, status
                  FROM persons WHERE status = 'approved'`;
     const params = [];
 
