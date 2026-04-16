@@ -156,7 +156,13 @@ export const createPerson = async (req, res) => {
 // PATCH /persons/:id
 export const updatePerson = async (req, res) => {
   const { id } = req.params;
-  const updates = req.validated;
+  const updates = { ...req.validated };
+
+  // is_deceased no es una columna real, eliminarla antes del UPDATE
+  delete updates.is_deceased;
+
+  // Si death_date viene vacío, guardarlo como null
+  if (updates.death_date === '') updates.death_date = null;
 
   try {
     // Check person exists and user has permission
