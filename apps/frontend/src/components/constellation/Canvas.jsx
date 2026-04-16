@@ -764,6 +764,49 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
       }
     }
 
+    // ── PARTÍCULAS DE FAMILIA (todos los links no-pareja) ──
+    const familyParticles = [];
+    links.filter(l => l.type !== 'partner').forEach(link => {
+      const srcId = link.source?.id || link.source;
+      const tgtId = link.target?.id || link.target;
+      const srcNode = nodes.find(n => n.id === srcId);
+      const tgtNode = nodes.find(n => n.id === tgtId);
+      if (!srcNode || !tgtNode) return;
+
+      const person = persons.find(p => p.id === srcId);
+      const family = families?.find(f => f.id === person?.family_id);
+      const color = family ? `#${family.color_hex}` : '#9B59B6';
+
+      // 2 partículas por línea, una en cada dirección
+      for (let i = 0; i < 2; i++) {
+        familyParticles.push({
+          fromNode: i === 0 ? srcNode : tgtNode,
+          toNode:   i === 0 ? tgtNode : srcNode,
+          t: Math.random(),
+          speed: 0.0015 + Math.random() * 0.001,
+          color,
+          size: 1.5,
+          maxAlpha: 0.35,
+          level: 1,
+        });
+      }
+    });
+
+    // Añadirlas al array global de partículas
+    activeParticlesRef.current = [
+      ...activeParticlesRef.current,
+      ...familyParticles,
+    ];
+
+    // Arrancar animación si no está activa
+    if (!particleAnimRef.current && particleCanvasRef.current) {
+      particleAnimRef.current = animateParticles(
+        particleCanvasRef.current,
+        activeParticlesRef,
+        () => currentTransformRef.current
+      );
+    }
+
     // Drag handlers
     function dragStarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
