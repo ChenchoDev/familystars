@@ -220,22 +220,42 @@ export default function Constellation() {
             ))}
           </div>
 
-          {/* MEJORA 6: Botón de exportar */}
-          <button
-            onClick={() => canvasRef.current?.exportAsImage()}
-            title="Descargar constelación como imagen"
-            style={{
-              padding: '8px 12px', borderRadius: '12px',
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
-          >
-            📸
-          </button>
+          {/* MEJORA 6: Botones de exportar */}
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            {/* Botón PNG */}
+            <button
+              onClick={() => canvasRef.current?.exportAsImage()}
+              title="Descargar como imagen PNG"
+              style={{
+                padding: '8px 12px', borderRadius: '10px', flexShrink: 0,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
+            >
+              📸
+            </button>
+
+            {/* Botón SVG */}
+            <button
+              onClick={() => canvasRef.current?.exportAsSVG()}
+              title="Descargar como SVG vectorial (para imprimir)"
+              style={{
+                padding: '8px 12px', borderRadius: '10px', flexShrink: 0,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
+            >
+              🖨️
+            </button>
+          </div>
         </div>
       </div>
 

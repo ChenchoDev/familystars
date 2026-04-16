@@ -870,7 +870,7 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
     }
   }, [familyFilter]);
 
-  // MEJORA 6: Exponer método exportAsImage via useImperativeHandle
+  // MEJORA 6: Exponer métodos exportAsImage y exportAsSVG via useImperativeHandle
   useImperativeHandle(ref, () => ({
     exportAsImage: () => {
       const svg = svgRef.current;
@@ -900,6 +900,19 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
         link.click();
       };
       img.src = url;
+    },
+    exportAsSVG: () => {
+      const svg = svgRef.current;
+      if (!svg) return;
+      const serializer = new XMLSerializer();
+      const svgStr = serializer.serializeToString(svg);
+      const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = 'FamilyStars_Constelacion.svg';
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
     }
   }));
 
