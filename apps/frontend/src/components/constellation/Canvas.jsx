@@ -631,6 +631,10 @@ const ConstellationCanvas = forwardRef(function ConstellationCanvas(
       .attr('clip-path', (d) => `url(#clip-${d.id})`)
       .attr('preserveAspectRatio', 'xMidYMid slice')
       .style('cursor', 'pointer')
+      .style('filter', (d) => d.is_deceased
+        ? 'grayscale(100%) brightness(0.75) contrast(1.1)'
+        : 'none'
+      )
       .style('pointer-events', 'none');
 
     // Draw name labels under stars
