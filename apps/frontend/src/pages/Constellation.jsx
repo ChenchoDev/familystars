@@ -4,30 +4,18 @@ import SearchBar from '../components/search/SearchBar';
 import ProfilePanel from '../components/profile/ProfilePanel';
 import StarryBackground from '../components/background/StarryBackground';
 import { personsAPI, familiesAPI, relationshipsAPI } from '../api/client';
-import { useAPI } from '../hooks/useAPI';
 
 export default function Constellation() {
   const [persons, setPersons] = useState([]);
   const [families, setFamilies] = useState([]);
   const [relationships, setRelationships] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [personToAnimate, setPersonToAnimate] = useState(null);
-  const [familyFilter, setFamilyFilter] = useState(null); // MEJORA 5: estado del filtro
-  const canvasRef = useRef(null); // MEJORA 6: ref para exportar imagen
+  const [familyFilter, setFamilyFilter] = useState(null);
+  const canvasRef = useRef(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Handle person selection from search - animate only (don't open profile)
-  const handleSelectPersonFromSearch = (person) => {
-    if (person) {
-      setPersonToAnimate(person); // Trigger canvas animation only
-      // Profile opens on star click, not automatically
-    }
-  };
+  useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     try {
@@ -37,190 +25,89 @@ export default function Constellation() {
         familiesAPI.list(),
         relationshipsAPI.list(),
       ]);
-
-      // Check if we have valid data
-      // Axios wraps response in data, backend also returns { data: [...] }, so double-wrapped
       const persons = Array.isArray(personsRes?.data) ? personsRes.data : personsRes?.data?.data || [];
       const families = Array.isArray(familiesRes?.data) ? familiesRes.data : familiesRes?.data?.data || [];
       const relationships = Array.isArray(relationshipsRes?.data) ? relationshipsRes.data : relationshipsRes?.data?.data || [];
-
-      // Always use data from API (even if empty)
-      setPersons(persons);
+      setPersons(persons.filter(p => p.status === 'approved'));
       setFamilies(families);
       setRelationships(relationships);
     } catch (err) {
-      console.log('Error loading from API, using mock data:', err.message);
-      // Use mock data when API fails or is empty
-      const mockFamilies = [
-        { id: '1', name: 'Paterna', color_hex: '9B59B6' },
-        { id: '2', name: 'Materna', color_hex: '3498DB' },
-        { id: '3', name: 'Política 1', color_hex: 'F39C12' },
-        { id: '4', name: 'Política 2', color_hex: '27AE60' },
-      ];
-
-      const mockPersons = [
-        { id: '1', first_name: 'Carlos', last_name: 'García', family_id: '1' },
-        { id: '2', first_name: 'María', last_name: 'López', family_id: '2' },
-        { id: '3', first_name: 'Juan', last_name: 'Pérez', family_id: '1' },
-        { id: '4', first_name: 'Ana', last_name: 'Martínez', family_id: '2' },
-        { id: '5', first_name: 'Luis', last_name: 'González', family_id: '3' },
-        { id: '6', first_name: 'Rosa', last_name: 'Sánchez', family_id: '4' },
-        { id: '7', first_name: 'Pedro', last_name: 'Rodríguez', family_id: '1' },
-        { id: '8', first_name: 'Elena', last_name: 'Díaz', family_id: '2' },
-      ];
-
-      const mockRelationships = [
-        { id: '1', person_a_id: '1', person_b_id: '2', type: 'partner' },
-        { id: '2', person_a_id: '1', person_b_id: '3', type: 'parent' },
-        { id: '3', person_a_id: '2', person_b_id: '4', type: 'sibling' },
-        { id: '4', person_a_id: '3', person_b_id: '5', type: 'partner' },
-        { id: '5', person_a_id: '5', person_b_id: '6', type: 'sibling' },
-        { id: '6', person_a_id: '1', person_b_id: '7', type: 'sibling' },
-        { id: '7', person_a_id: '2', person_b_id: '8', type: 'parent' },
-      ];
-
-      setFamilies(mockFamilies);
-      setPersons(mockPersons);
-      setRelationships(mockRelationships);
+      console.error('Error loading data:', err);
     } finally {
       setLoading(false);
     }
   }
 
+  const handleSelectPerson = (person) => {
+    setSelectedPerson(person);
+  };
+
+  const handleSelectPersonFromSearch = (person) => {
+    if (person) {
+      setPersonToAnimate(person);
+      setSelectedPerson(person);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-space-dark">
-        <div className="spinner">
-          <svg
-            className="w-12 h-12 text-constellation-purple"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </div>
+      <div style={{
+        width: '100%', height: '100vh',
+        background: '#080C18',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexDirection: 'column', gap: '16px',
+      }}>
+        <div style={{ fontSize: '32px', animation: 'spin 2s linear infinite' }}>🌟</div>
+        <p style={{ color: '#9ca3af', fontSize: '14px' }}>Cargando el universo...</p>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-
   return (
-    <div className="w-full h-full flex flex-col bg-space-dark relative">
-      {/* Starry Background */}
+    <div style={{ width: '100%', height: '100vh', background: '#080C18', position: 'relative', overflow: 'hidden' }}>
+
+      {/* Fondo de estrellas */}
       <StarryBackground />
 
       {/* Header */}
-      <div
-        style={{
-          background: 'linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.4) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(168, 85, 247, 0.1)',
-          padding: '16px 24px',
-          position: 'relative',
-          zIndex: 20,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-          }}
-        >
-          {/* Logo Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-            {/* Animated Logo */}
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '22px',
-                fontWeight: 'bold',
-                boxShadow: '0 8px 16px rgba(168, 85, 247, 0.3)',
-                animation: 'pulse 2s ease-in-out infinite',
-                flexShrink: 0,
-              }}
-            >
-              ⭐
-            </div>
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
+        background: 'linear-gradient(180deg, rgba(8,12,24,0.9) 0%, rgba(8,12,24,0) 100%)',
+        backdropFilter: 'blur(10px)',
+        padding: '16px 24px',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
+        }}>
+
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '10px',
+              background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '18px', boxShadow: '0 4px 16px rgba(168,85,247,0.4)',
+            }}>🌟</div>
             <div>
-              <h1
-                style={{
-                  fontSize: window.innerWidth < 640 ? '18px' : '22px',
-                  fontWeight: 'bold',
-                  color: '#fff',
-                  margin: 0,
-                  letterSpacing: '0.5px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                FamilyStars
-              </h1>
-              <p
-                style={{
-                  fontSize: '11px',
-                  color: '#a0aec0',
-                  margin: '1px 0 0 0',
-                  fontWeight: '500',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {persons.length} estrellas • {families.length} constelaciones
-              </p>
+              <div style={{ color: '#fff', fontWeight: '800', fontSize: '15px', lineHeight: 1 }}>FamilyStars</div>
+              <div style={{ color: '#6b7280', fontSize: '10px', marginTop: '2px' }}>
+                {persons.length} estrellas · {families.length} constelaciones
+              </div>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div style={{ flex: '1 1 280px', minWidth: '280px', maxWidth: '420px' }}>
-            <SearchBar persons={persons} families={families} onSelectPerson={handleSelectPersonFromSearch} />
+          {/* Buscador */}
+          <div style={{ flex: 1, maxWidth: '400px' }}>
+            <SearchBar
+              persons={persons}
+              families={families}
+              onSelectPerson={handleSelectPersonFromSearch}
+            />
           </div>
 
-          {/* MEJORA 5: Filtro de familia */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setFamilyFilter(null)}
-              style={{
-                padding: '6px 14px', borderRadius: '20px', border: 'none',
-                cursor: 'pointer', fontSize: '12px', fontWeight: '600',
-                background: familyFilter === null
-                  ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.07)',
-                color: familyFilter === null ? '#e9d5ff' : '#9ca3af',
-                transition: 'all 0.2s',
-              }}
-            >
-              Todas
-            </button>
-            {families.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setFamilyFilter(familyFilter === f.id ? null : f.id)}
-                style={{
-                  padding: '6px 14px', borderRadius: '20px', border: 'none',
-                  cursor: 'pointer', fontSize: '12px', fontWeight: '600',
-                  background: familyFilter === f.id
-                    ? `rgba(${parseInt(f.color_hex.slice(0,2),16)},${parseInt(f.color_hex.slice(2,4),16)},${parseInt(f.color_hex.slice(4,6),16)},0.35)`
-                    : 'rgba(255,255,255,0.07)',
-                  color: familyFilter === f.id ? '#fff' : '#9ca3af',
-                  borderLeft: familyFilter === f.id ? `3px solid #${f.color_hex}` : '3px solid transparent',
-                  transition: 'all 0.2s',
-                }}
-              >
-                {f.display_name || f.name}
-              </button>
-            ))}
-          </div>
-
-          {/* MEJORA 6: Botones de exportar */}
+          {/* Botones de exportar */}
           <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
             {/* Botón PNG */}
             <button
@@ -228,13 +115,13 @@ export default function Constellation() {
               title="Descargar como imagen PNG"
               style={{
                 padding: '8px 12px', borderRadius: '10px', flexShrink: 0,
-                background: 'rgba(255,255,255,0.07)',
+                background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#9ca3af'; }}
             >
               📸
             </button>
@@ -245,41 +132,77 @@ export default function Constellation() {
               title="Descargar como SVG vectorial (para imprimir)"
               style={{
                 padding: '8px 12px', borderRadius: '10px', flexShrink: 0,
-                background: 'rgba(255,255,255,0.07)',
+                background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: '#9ca3af', fontSize: '16px', cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168,85,247,0.2)'; e.currentTarget.style.color = '#fff'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#9ca3af'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#9ca3af'; }}
             >
               🖨️
             </button>
           </div>
         </div>
+
+        {/* Filtro de familias */}
+        {families.length > 0 && (
+          <div style={{
+            display: 'flex', gap: '8px', flexWrap: 'wrap',
+            marginTop: '12px', alignItems: 'center',
+          }}>
+            <button
+              onClick={() => setFamilyFilter(null)}
+              style={{
+                padding: '5px 14px', borderRadius: '20px', border: 'none',
+                cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                background: familyFilter === null ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.06)',
+                color: familyFilter === null ? '#e9d5ff' : '#6b7280',
+                transition: 'all 0.2s',
+              }}
+            >
+              Todas
+            </button>
+            {families.map(f => {
+              const r = parseInt(f.color_hex.slice(0,2), 16);
+              const g = parseInt(f.color_hex.slice(2,4), 16);
+              const b = parseInt(f.color_hex.slice(4,6), 16);
+              const isActive = familyFilter === f.id;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFamilyFilter(isActive ? null : f.id)}
+                  style={{
+                    padding: '5px 14px', borderRadius: '20px', border: 'none',
+                    cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                    background: isActive ? `rgba(${r},${g},${b},0.3)` : 'rgba(255,255,255,0.06)',
+                    color: isActive ? '#fff' : '#6b7280',
+                    borderLeft: isActive ? `3px solid #${f.color_hex}` : '3px solid transparent',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {(f.display_name || f.name).toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-      `}</style>
-
-      {/* Canvas */}
-      <div className="flex-1 overflow-hidden">
+      {/* Canvas de constelación */}
+      <div style={{ position: 'absolute', inset: 0 }}>
         <ConstellationCanvas
           ref={canvasRef}
           persons={persons}
           families={families}
           relationships={relationships}
-          onSelectPerson={setSelectedPerson}
+          onSelectPerson={handleSelectPerson}
           personToAnimate={personToAnimate}
           familyFilter={familyFilter}
         />
       </div>
 
-      {/* Profile Panel - Outside Canvas to be truly fixed */}
+      {/* Panel de perfil */}
       {selectedPerson && (
         <ProfilePanel
           person={selectedPerson}
@@ -291,38 +214,14 @@ export default function Constellation() {
       )}
 
       {/* Footer */}
-      <div
-        style={{
-          background: 'linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(30,41,59,0.8) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(168, 85, 247, 0.1)',
-          padding: '12px 24px',
-          position: 'relative',
-          zIndex: 20,
-          boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.3)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '24px', fontSize: '12px' }}>
-          <span style={{ color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>👆</span> Arrastra
-          </span>
-          <span style={{ color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>🔍</span> Zoom
-          </span>
-          <span style={{ color: '#a0aec0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>⭐</span> Perfil
-          </span>
-        </div>
-        <p
-          style={{
-            fontSize: '10px',
-            color: '#64748b',
-            textAlign: 'center',
-            margin: '8px 0 0 0',
-            fontWeight: '500',
-          }}
-        >
-          Un universo para no perder a nadie • FamilyStars 2026
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
+        padding: '8px 24px', textAlign: 'center',
+        background: 'linear-gradient(0deg, rgba(8,12,24,0.8) 0%, transparent 100%)',
+        pointerEvents: 'none',
+      }}>
+        <p style={{ color: '#1e293b', fontSize: '11px', margin: 0 }}>
+          Un universo para no perder a nadie · FamilyStars 2026
         </p>
       </div>
     </div>
